@@ -1,0 +1,20 @@
+[package]
+name = "baby-os"
+version = "0.1.0"
+edition = "2024"
+build = "tools/build.rs"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[[bin]]
+path = "src/kernel.rs"
+name = "baby_os"
+test = false
+bench = false
+
+[dependencies]
+volatile = "0.2.6"
