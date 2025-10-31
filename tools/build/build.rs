@@ -1,15 +1,15 @@
 use std::{path::Path, process::Command};
 
 fn main() {
-	println!("cargo:rerun-if-changed=tools/boot.s");
+	println!("cargo:rerun-if-changed=tools/build/boot.s");
 
-	let out_dir = "tools";
+	let out_dir = "tools/build";
 	let obj_path = Path::new(&out_dir).join("boot.o");
 
 	let status = Command::new("nasm")
 		.args([
 			"-felf32",
-			"tools/boot.s",
+			"tools/build/boot.s",
 			"-o",
 			obj_path.to_str().unwrap(),
 		])

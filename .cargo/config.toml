@@ -1,5 +1,5 @@
 [build]
-target = "tools/x86-target.json"
+target = "tools/build/x86-target.json"
 
 [unstable]
 build-std-features = ["compiler-builtins-mem"]

@@ -5,12 +5,12 @@ TARGET_DIR	:= target/$(TARGET_NAME)/$(MODE)
 KERNEL		:= $(TARGET_DIR)/baby_os
 ISO_DIR		:= $(BUILD_DIR)/isodir
 ISO			:= $(BUILD_DIR)/baby_os.iso
-GRUBCFG		:= tools/grub.cfg
+GRUBCFG		:= tools/build/grub.cfg
 QEMU		:= qemu-system-i386
 CARGO		:= cargo +nightly
 
-TOOLS		:= $(addprefix tools/, boot.s build.rs $(TARGET_NAME).json link.ld)
-KERNEL_DEPS = $(TOOLS) $(shell find src -name '*.rs')
+BUILD_TOOLS		:= $(addprefix tools/build/, boot.s build.rs $(TARGET_NAME).json link.ld)
+KERNEL_DEPS = $(BUILD_TOOLS) $(shell find src -name '*.rs')
 
 ifeq ($(MODE), release)
 	BUILD_FLAGS := --release
