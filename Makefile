@@ -38,8 +38,16 @@ run: $(ISO)
 release:
 	$(MAKE) MODE=release
 
+deps:
+	tools/install_deps.sh
+
+uninstall-deps:
+	tools/uninstall_deps.sh
+
 clean:
 	rm -rf $(BUILD_DIR)
 	$(CARGO) clean
 
 re: clean run
+
+.PHONY: all iso run release deps clean re
