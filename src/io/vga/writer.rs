@@ -4,9 +4,9 @@ use crate::io::vga::{
 };
 
 pub struct Writer {
-    column_position: usize,
-    color_code: ColorCode,
-    buffer: &'static mut Buffer,
+    pub column_position: usize,
+    pub color_code: ColorCode,
+    pub buffer: &'static mut Buffer,
 }
 
 impl core::fmt::Write for Writer {
@@ -51,20 +51,26 @@ impl Writer {
         }
     }
 
-    fn new_line(&mut self) {}
-}
+    fn new_line(&mut self) {
+        for row in 1..BUFFER_HEIGHT {
+            for col in 0..BUFFER_WIDTH {
+                let char = self.buffer.chars[row][col].read();
+                self.buffer.chars[row - 1][col].write(char);
+            }
+        }
 
-pub fn print_something() {
-    use core::fmt::Write;
+        self.clear_row(BUFFER_HEIGHT - 1);
+        self.column_position = 0;
+    }
 
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
+    fn clear_row(&mut self, row: usize) {
+        let blank = ScreenChar {
+            ascii_character: b' ',
+            color_code: self.color_code
+        };
 
-    writer.write_byte(b'H');
-    writer.write_string("ello ");
-    writer.write_string("Wörld ! ");
-    write!(writer, "The numbers are {} and {}", 42, 1.0 / 3.0).unwrap();
+        for col in 0..BUFFER_WIDTH {
+            self.buffer.chars[row][col].write(blank);
+        }
+    }
 }
