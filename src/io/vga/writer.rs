@@ -1,6 +1,6 @@
 use crate::io::vga::{
     buffer::{BUFFER_HEIGHT, BUFFER_WIDTH, Buffer, ScreenChar},
-    color::{Color, ColorCode},
+    color::ColorCode,
 };
 
 pub struct Writer {

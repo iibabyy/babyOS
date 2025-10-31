@@ -22,7 +22,7 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub(super) struct ColorCode(u8);
+pub struct ColorCode(u8);
 
 impl ColorCode {
     pub const fn new(foreground: Color, background: Color) -> ColorCode {
