@@ -13,7 +13,7 @@ panic = "abort"
 [[bin]]
 path = "src/kernel.rs"
 name = "baby_os"
-test = false
+test = true
 bench = false
 
 [dependencies]

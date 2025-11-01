@@ -22,6 +22,7 @@ all: run
 iso: $(ISO)
 
 $(KERNEL): $(KERNEL_DEPS)
+	mkdir -p $(BUILD_DIR)
 	cargo build $(BUILD_FLAGS)
 
 $(ISO): $(KERNEL) $(GRUBCFG)
