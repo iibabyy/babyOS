@@ -1,4 +1,4 @@
-use crate::{io::vga::WRITER, println};
+use crate::{io::vga_buffer::WRITER, println};
 
 #[test_case]
 fn test_println_simple() {

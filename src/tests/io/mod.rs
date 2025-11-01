@@ -1,1 +1,1 @@
-mod vga;
+mod vga_buffer;
