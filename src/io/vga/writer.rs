@@ -20,6 +20,9 @@ impl core::fmt::Write for Writer {
 impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
+            b'\t' => {
+                self.column_position += 4;
+            },
             b'\n' => self.new_line(),
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
@@ -45,7 +48,7 @@ impl Writer {
         for byte in str.bytes() {
             match byte {
                 // printable ASCII byte or newline
-                0x20..=0x7e | b'\n' => self.write_byte(byte),
+                0x20..=0x7e | b'\t' | b'\n' => self.write_byte(byte),
                 // non printable ASCII
                 _ => self.write_byte(0xfe),
             }
