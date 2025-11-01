@@ -1,1 +1,1 @@
-pub(super) mod vga;
+pub mod vga;

@@ -1,9 +1,9 @@
-use std::{path::Path, process::Command};
+use std::{env, path::Path, process::Command};
 
 fn main() {
 	println!("cargo:rerun-if-changed=tools/build/boot.s");
 
-	let out_dir = "tools/build";
+	let out_dir = env::var("BUILD_DIR").unwrap_or("build".to_string());
 	let obj_path = Path::new(&out_dir).join("boot.o");
 
 	let status = Command::new("nasm")

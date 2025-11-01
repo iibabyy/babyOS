@@ -2,12 +2,11 @@ MODE		?= debug
 BUILD_DIR	:= build
 TARGET_NAME	:= x86-target
 TARGET_DIR	:= target/$(TARGET_NAME)/$(MODE)
-KERNEL		:= $(TARGET_DIR)/baby_os
+KERNEL		?= $(TARGET_DIR)/baby_os
 ISO_DIR		:= $(BUILD_DIR)/isodir
 ISO			:= $(BUILD_DIR)/baby_os.iso
 GRUBCFG		:= tools/build/grub.cfg
 QEMU		:= qemu-system-i386
-CARGO		:= cargo +nightly
 
 BUILD_TOOLS		:= $(addprefix tools/build/, boot.s build.rs $(TARGET_NAME).json link.ld)
 KERNEL_DEPS = $(BUILD_TOOLS) $(shell find src -name '*.rs')
@@ -23,7 +22,7 @@ all: run
 iso: $(ISO)
 
 $(KERNEL): $(KERNEL_DEPS)
-	$(CARGO) build $(BUILD_FLAGS)
+	cargo build $(BUILD_FLAGS)
 
 $(ISO): $(KERNEL) $(GRUBCFG)
 	mkdir -p $(ISO_DIR)/boot/grub
@@ -38,6 +37,10 @@ run: $(ISO)
 release:
 	$(MAKE) MODE=release
 
+test:
+	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format=json | \
+			jq -r 'select(.profile.test == true) | .executable')
+
 deps:
 	tools/install_deps.sh
 
@@ -46,8 +49,8 @@ uninstall-deps:
 
 clean:
 	rm -rf $(BUILD_DIR)
-	$(CARGO) clean
+	cargo clean
 
 re: clean run
 
-.PHONY: all iso run release deps clean re
+.PHONY: all iso run release deps clean re test
