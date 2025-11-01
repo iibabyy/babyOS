@@ -16,13 +16,13 @@ pub extern "C" fn _entrypoint() -> ! {
     tests::run_tests();
 
     println!("Hello Word{}", " !");
-    println!("Hello Word{}", " !");
-    println!("Hello Word{}", " !");
-    println!("Hello Word{}", " !");
-    println!("Hello Word{}", " !");
-    println!("Hello Word{}", " !");
-    println!("Hello Word{}", " !");
-    println!("Hello Word{}", " !");
+    print!("Hello Word{}", " !");
+    print!("Hello Word{}", " !");
+    print!("Hello Word{}", " !");
+    print!("Hello Word{}", " !");
+    print!("Hello Word{}", " !");
+    print!("Hello Word{}", " !");
+    print!("Hello Word{}", " !");
     println!("Hello Word{}", " !");
     println!("Hello Word{}", " !");
     println!("Hello Word{}", " !");

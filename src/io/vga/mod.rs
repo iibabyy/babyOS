@@ -1,6 +1,6 @@
-mod buffer;
-mod color;
-mod writer;
+pub(crate) mod buffer;
+pub(crate) mod color;
+pub(crate) mod writer;
 
 use writer::Writer;
 use color::{Color, ColorCode};
