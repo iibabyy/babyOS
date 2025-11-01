@@ -18,6 +18,7 @@ pub extern "C" fn _entrypoint() -> ! {
     println!("Hello Word{}", " !");
     println!("Hello Word{}", " !");
     println!("Hello Word{}", " !");
+    panic!("What !");
 
     loop {}
 }
@@ -25,6 +26,7 @@ pub extern "C" fn _entrypoint() -> ! {
 use core::panic::PanicInfo;
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("{info}");
     loop {}
 }
