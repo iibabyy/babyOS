@@ -7,6 +7,17 @@ mod io;
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
     println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
+    println!("Hello Word{}", " !");
 
     loop {}
 }
