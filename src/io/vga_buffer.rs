@@ -1,5 +1,5 @@
 //! VGA Text Buffer Implementation
-//! 
+//!
 //! Handles low-level text output to the VGA buffer at 0xb8000
 
 use lazy_static::lazy_static;
@@ -18,123 +18,154 @@ pub const BUFFER_WIDTH: usize = 80;
 // ================================
 
 lazy_static! {
-	/// Global writer instance for safe console output
-	/// Provides thread-safe access to the VGA text buffer
-	pub static ref WRITER: Mutex<VgaWriter> = Mutex::new(
-		VgaWriter {
-			column_position: 0,
-			row_position: 0,
-			color_code: ColorCode::new(Color::White, Color::Black),
-			buffer: unsafe { &mut *(0xb8000 as *mut self::Buffer) }
-		}
-	);
+    /// Global writer instance for safe console output
+    /// Provides thread-safe access to the VGA text buffer
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(
+        Writer {
+            infos: KernelWriterInfos {
+                column_position: 0,
+                row_position: 0,
+                color_code: ColorCode::new(Color::White, Color::Black),
+            },
+            buffer: unsafe { &mut *(0xb8000 as *mut self::Buffer) }
+        }
+    );
 }
 
 // ================================
-// Writer Trait Definition
+// KernelWriter Trait Definition
 // ================================
 
-pub trait Writer {
-    fn write_byte(&mut self, byte: u8);
-
-    fn write_string(&mut self, str: &str) {
-		for byte in str.bytes() {
-			self.write_byte(byte);
-		}
-	}
-}
-
-impl core::fmt::Write for dyn Writer {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.write_string(s);
-        Ok(())
-    }
-}
-
-// ================================
-// VgaWriter Struct Definition
-// ================================
-
-pub struct VgaWriter {
+pub struct KernelWriterInfos {
     pub column_position: usize,
     pub row_position: usize,
     pub color_code: ColorCode,
-    pub buffer: &'static mut Buffer,
 }
 
-impl core::fmt::Write for VgaWriter {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.write_string(s);
-        Ok(())
-    }
-}
+pub trait KernelWriter {
+    fn infos(&mut self) -> &mut KernelWriterInfos;
+    fn read(&self, row: usize, col: usize) -> ScreenChar;
+    fn write(&mut self, row: usize, col: usize, byte: ScreenChar);
 
-impl Writer for VgaWriter {
-    /// Writes a single byte to the buffer
-	fn write_byte(&mut self, byte: u8) {
-		        match byte {
+    #[inline(always)]
+    fn write_byte(&mut self, byte: u8) {
+        match byte {
+            // Newline
+            b'\n' => self.new_line(),
+
+            // Tab character - advance to next tab stop (every 4 spaces)
             b'\t' => {
-                // Tab character - advance to next tab stop (every 4 spaces)
-                self.column_position += 4 - (self.column_position % 4);
-            }
-            b'\n' => self.new_line(), // New line
+                let infos = self.infos();
+                infos.column_position += 4 - (infos.column_position % 4);
+            },
+
+            // Regular character
             byte => {
-                // Regular character
-                if self.column_position >= BUFFER_WIDTH {
+                if self.infos().column_position >= BUFFER_WIDTH {
                     self.new_line();
                 }
 
-                let row = self.row_position;
-                let col = self.column_position;
+                let infos = self.infos();
 
-                let color_code = self.color_code;
+                let row = infos.row_position;
+                let col = infos.column_position;
 
-                let byte_to_write =
-					if matches!(byte, 0x20..=0x7e | b'\t' | b'\n') { byte }
-					else { 0xfe };
+                let color_code = infos.color_code;
 
-                self.buffer.chars[row][col].write(ScreenChar {
-                    ascii_character: byte_to_write,
-                    color_code,
-                });
+                let byte_to_write = if matches!(byte, 0x20..=0x7e | b'\t' | b'\n') {
+                    byte
+                } else {
+                    0xfe
+                };
 
-                self.column_position += 1;
+                self.write(
+                    row,
+                    col,
+                    ScreenChar {
+                        ascii_character: byte_to_write,
+                        color_code,
+                    },
+                );
+
+                self.infos().column_position += 1;
             }
         }
+    }
 
-	}
-}
+    #[inline(always)]
+    fn write_string(&mut self, str: &str) {
+        for byte in str.bytes() {
+            self.write_byte(byte);
+        }
+    }
 
-impl VgaWriter {
     /// Moves to the next line, scrolling if necessary
+    #[inline(always)]
     fn new_line(&mut self) {
-        if self.row_position < BUFFER_HEIGHT - 1 {
-            self.row_position += 1;
+        let infos: &mut KernelWriterInfos = self.infos();
+
+        infos.column_position = 0;
+        if infos.row_position < BUFFER_HEIGHT - 1 {
+            infos.row_position += 1;
         } else {
             // Scroll: move all lines up by one, clear the last line
             for row in 1..BUFFER_HEIGHT {
                 for col in 0..BUFFER_WIDTH {
-                    let char = self.buffer.chars[row][col].read();
-                    self.buffer.chars[row - 1][col].write(char);
+                    let char = self.read(row, col);
+                    self.write(row - 1, col, char);
                 }
             }
 
             self.clear_row(BUFFER_HEIGHT - 1);
         }
-
-        self.column_position = 0;
     }
 
     /// Clears a single row with blank characters
+    #[inline(always)]
     fn clear_row(&mut self, row: usize) {
+        let infos: &mut KernelWriterInfos = self.infos();
+
         let blank = ScreenChar {
             ascii_character: b' ',
-            color_code: self.color_code,
+            color_code: infos.color_code,
         };
 
         for col in 0..BUFFER_WIDTH {
-            self.buffer.chars[row][col].write(blank);
+            self.write(row, col, blank);
         }
+    }
+}
+
+// ================================
+// Writer Struct Definition
+// ================================
+
+pub struct Writer {
+    pub infos: KernelWriterInfos,
+    pub buffer: &'static mut Buffer,
+}
+
+impl core::fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.write_string(s);
+        Ok(())
+    }
+}
+
+impl KernelWriter for Writer {
+    #[inline(always)]
+    fn infos(&mut self) -> &mut KernelWriterInfos {
+        &mut self.infos
+    }
+
+    #[inline(always)]
+    fn read(&self, row: usize, col: usize) -> ScreenChar {
+        self.buffer.chars[row][col].read()
+    }
+
+    #[inline(always)]
+    fn write(&mut self, row: usize, col: usize, byte: ScreenChar) {
+        self.buffer.chars[row][col].write(byte)
     }
 }
 
@@ -197,5 +228,8 @@ pub struct Buffer {
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
     use core::fmt::Write;
-    crate::io::vga_buffer::WRITER.lock().write_fmt(args).unwrap();
+    crate::io::vga_buffer::WRITER
+        .lock()
+        .write_fmt(args)
+        .unwrap();
 }
