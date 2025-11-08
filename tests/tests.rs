@@ -3,7 +3,6 @@
 #![feature(custom_test_frameworks)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
-
 #![cfg(test)]
 
 use baby_lib::{print, println};
@@ -13,7 +12,7 @@ mod utils;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
-	self::test_main();
+    self::test_main();
     loop {}
 }
 

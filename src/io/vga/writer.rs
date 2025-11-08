@@ -4,7 +4,7 @@
 
 use core::fmt::Write;
 
-use crate::io::vga::{buffer::*, ColorCode, BUFFER_HEIGHT, BUFFER_WIDTH};
+use crate::io::vga::{BUFFER_HEIGHT, BUFFER_WIDTH, ColorCode, buffer::*};
 
 // ================================
 // KernelWriter Trait Definition
@@ -31,7 +31,7 @@ pub trait KernelWriter {
             b'\t' => {
                 let infos = self.infos();
                 infos.column_position += 4 - (infos.column_position % 4);
-            },
+            }
 
             // Regular character
             byte => {

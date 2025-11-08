@@ -20,7 +20,10 @@ pub const BUFFER_WIDTH: usize = 80;
 // Global Writer Instance
 // ================================
 
-use crate::io::vga::{buffer::{Color, ColorCode}, writer::{KernelWriterInfos, Writer}};
+use crate::io::vga::{
+    buffer::{Color, ColorCode},
+    writer::{KernelWriterInfos, Writer},
+};
 
 lazy_static! {
     /// Global writer instance for safe console output
@@ -44,8 +47,5 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
     use core::fmt::Write;
-    crate::io::vga::WRITER
-        .lock()
-        .write_fmt(args)
-        .unwrap();
+    crate::io::vga::WRITER.lock().write_fmt(args).unwrap();
 }

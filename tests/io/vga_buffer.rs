@@ -19,7 +19,7 @@ fn test_println_output() {
     let s = "Some test string that fits on a single line";
     println!("{}", s);
     for (i, c) in s.chars().enumerate() {
-		let writer = MOCK_WRITER.lock();
+        let writer = MOCK_WRITER.lock();
         let screen_char = writer.buffer.chars[writer.infos.row_position][i].read();
         assert_eq!(char::from(screen_char.ascii_character), c);
     }

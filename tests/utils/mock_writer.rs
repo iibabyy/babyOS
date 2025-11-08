@@ -1,11 +1,9 @@
 use baby_lib::io::vga::{
     buffer::*,
     writer::{KernelWriter, KernelWriterInfos},
-    *,
 };
-use volatile::Volatile;
 
-use crate::*;
+use volatile::Volatile;
 
 pub struct TestWriter {
     pub infos: KernelWriterInfos,
