@@ -1,36 +1,10 @@
-//! VGA Text Buffer Implementation
+//! VGA Text Buffer Writer Implementation
 //!
-//! Handles low-level text output to the VGA buffer at 0xb8000
+//! Provides the core writing functionality for VGA text output
 
-use lazy_static::lazy_static;
-use spin::Mutex;
-use volatile::Volatile;
+use core::fmt::Write;
 
-// ================================
-// Constants
-// ================================
-
-pub const BUFFER_HEIGHT: usize = 25;
-pub const BUFFER_WIDTH: usize = 80;
-
-// ================================
-// Global Writer Instance
-// ================================
-
-lazy_static! {
-    /// Global writer instance for safe console output
-    /// Provides thread-safe access to the VGA text buffer
-    pub static ref WRITER: Mutex<Writer> = Mutex::new(
-        Writer {
-            infos: KernelWriterInfos {
-                column_position: 0,
-                row_position: 0,
-                color_code: ColorCode::new(Color::White, Color::Black),
-            },
-            buffer: unsafe { &mut *(0xb8000 as *mut self::Buffer) }
-        }
-    );
-}
+use crate::io::vga::{buffer::*, ColorCode, BUFFER_HEIGHT, BUFFER_WIDTH};
 
 // ================================
 // KernelWriter Trait Definition
@@ -145,7 +119,7 @@ pub struct Writer {
     pub buffer: &'static mut Buffer,
 }
 
-impl core::fmt::Write for Writer {
+impl Write for Writer {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.write_string(s);
         Ok(())
@@ -167,69 +141,4 @@ impl KernelWriter for Writer {
     fn write(&mut self, row: usize, col: usize, byte: ScreenChar) {
         self.buffer.chars[row][col].write(byte)
     }
-}
-
-// ================================
-// Color Definitions
-// ================================
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-#[allow(dead_code)]
-pub enum Color {
-    Black = 0,
-    Blue = 1,
-    Green = 2,
-    Cyan = 3,
-    Red = 4,
-    Magenta = 5,
-    Brown = 6,
-    LightGray = 7,
-    DarkGray = 8,
-    LightBlue = 9,
-    LightGreen = 10,
-    LightCyan = 11,
-    LightRed = 12,
-    Pink = 13,
-    Yellow = 14,
-    White = 15,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct ColorCode(u8);
-
-impl ColorCode {
-    pub const fn new(foreground: Color, background: Color) -> ColorCode {
-        ColorCode((background as u8) << 4 | (foreground as u8))
-    }
-}
-
-// ================================
-// Screen Buffer Structures
-// ================================
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(C)]
-pub struct ScreenChar {
-    pub ascii_character: u8,
-    pub color_code: ColorCode,
-}
-
-#[repr(transparent)]
-pub struct Buffer {
-    pub chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
-}
-
-// ================================
-// Public Interface Functions
-// ================================
-
-#[doc(hidden)]
-pub fn _print(args: core::fmt::Arguments) {
-    use core::fmt::Write;
-    crate::io::vga_buffer::WRITER
-        .lock()
-        .write_fmt(args)
-        .unwrap();
 }

@@ -1,7 +1,7 @@
 //! This module provides the main interface for input/output operations
 
 pub mod interrupts;
-pub mod vga_buffer;
+pub mod vga;
 
 // ================================
 // Public Macros
@@ -9,7 +9,7 @@ pub mod vga_buffer;
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => ($crate::io::vga_buffer::_print(format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::io::vga::_print(format_args!($($arg)*)));
 }
 
 #[macro_export]
