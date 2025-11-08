@@ -1,6 +1,6 @@
-use baby_lib::io::vga_buffer::WRITER;
+use baby_lib::println;
 
-use crate::*;
+use crate::utils::mock_writer::MOCK_WRITER;
 
 #[test_case]
 fn test_println_simple() {
@@ -19,8 +19,8 @@ fn test_println_output() {
     let s = "Some test string that fits on a single line";
     println!("{}", s);
     for (i, c) in s.chars().enumerate() {
-		let writer = WRITER.lock();
-        let screen_char = writer.buffer.chars[writer.row_position][i].read();
+		let writer = MOCK_WRITER.lock();
+        let screen_char = writer.buffer.chars[writer.infos.row_position][i].read();
         assert_eq!(char::from(screen_char.ascii_character), c);
     }
 }
