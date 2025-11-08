@@ -1,10 +1,17 @@
-use crate::{print, println};
+#![no_main]
+#![no_std]
+#![feature(custom_test_frameworks)]
+#![test_runner(crate::test_runner)]
+#![reexport_test_harness_main = "test_main"]
+
+use baby_lib::*;
 
 mod io;
 
-pub fn run_tests() {
-	super::test_main();
-	loop {}
+#[unsafe(no_mangle)]
+pub extern "C" fn _entrypoint() -> ! {
+	self::test_main();
+    loop {}
 }
 
 #[cfg(test)]
@@ -28,9 +35,4 @@ where
         self();
         println!("[ok]");
     }
-}
-
-#[test_case]
-fn trivial_assertion() {
-    assert_eq!(1, 1);
 }

@@ -13,8 +13,16 @@ panic = "abort"
 [[bin]]
 path = "src/kernel.rs"
 name = "baby_os"
-test = true
+test = false
 bench = false
+
+[lib]
+path = "src/lib.rs"
+name = "baby_lib"
+test = false
+bench = false
+
+[profile.test]
 
 [dependencies]
 volatile = "0.2.6"

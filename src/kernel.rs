@@ -6,8 +6,6 @@
 
 // #![warn(missing_docs)]
 
-#[cfg(test)]
-mod tests;
 mod io;
 
 #[unsafe(no_mangle)]

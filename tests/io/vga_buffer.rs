@@ -1,4 +1,6 @@
-use crate::{io::vga_buffer::WRITER, println};
+use baby_lib::io::vga_buffer::WRITER;
+
+use crate::*;
 
 #[test_case]
 fn test_println_simple() {
