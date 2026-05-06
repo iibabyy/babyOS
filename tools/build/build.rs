@@ -14,9 +14,7 @@ fn main() {
         .status()
         .expect("Failed to run nasm");
 
-    if !status.success() {
-        panic!("nasm failed");
-    }
+    assert!(status.success(), "nasm failed");
 
     println!("cargo:rustc-link-arg={}", obj_path.display());
     println!("cargo:rerun-if-changed=tools/build/boot.s");

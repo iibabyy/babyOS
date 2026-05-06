@@ -4,7 +4,7 @@
 
 use core::fmt::Write;
 
-use crate::io::vga::{BUFFER_HEIGHT, BUFFER_WIDTH, ColorCode, buffer::*};
+use crate::io::vga::{BUFFER_HEIGHT, BUFFER_WIDTH, ColorCode, buffer::{ScreenChar, Buffer}};
 
 // ================================
 // KernelWriter Trait Definition
@@ -21,7 +21,7 @@ pub trait KernelWriter {
     fn read(&self, row: usize, col: usize) -> ScreenChar;
     fn write(&mut self, row: usize, col: usize, byte: ScreenChar);
 
-    #[inline(always)]
+    #[inline]
     fn write_byte(&mut self, byte: u8) {
         match byte {
             // Newline
@@ -66,7 +66,7 @@ pub trait KernelWriter {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn write_string(&mut self, str: &str) {
         for byte in str.bytes() {
             self.write_byte(byte);
@@ -74,7 +74,7 @@ pub trait KernelWriter {
     }
 
     /// Moves to the next line, scrolling if necessary
-    #[inline(always)]
+    #[inline]
     fn new_line(&mut self) {
         let infos: &mut KernelWriterInfos = self.infos();
 
@@ -95,7 +95,7 @@ pub trait KernelWriter {
     }
 
     /// Clears a single row with blank characters
-    #[inline(always)]
+    #[inline]
     fn clear_row(&mut self, row: usize) {
         let infos: &mut KernelWriterInfos = self.infos();
 
@@ -127,18 +127,18 @@ impl Write for Writer {
 }
 
 impl KernelWriter for Writer {
-    #[inline(always)]
+    #[inline]
     fn infos(&mut self) -> &mut KernelWriterInfos {
         &mut self.infos
     }
 
-    #[inline(always)]
+    #[inline]
     fn read(&self, row: usize, col: usize) -> ScreenChar {
         self.buffer.chars[row][col].read()
     }
 
-    #[inline(always)]
+    #[inline]
     fn write(&mut self, row: usize, col: usize, byte: ScreenChar) {
-        self.buffer.chars[row][col].write(byte)
+        self.buffer.chars[row][col].write(byte);
     }
 }
