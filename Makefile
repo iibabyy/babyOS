@@ -11,15 +11,17 @@ QEMU		:= qemu-system-i386
 BUILD_TOOLS		:= $(addprefix tools/build/, boot.s build.rs $(TARGET_NAME).json link.ld)
 KERNEL_DEPS = $(BUILD_TOOLS) $(shell find src -name '*.rs') $(shell find tests -name '*.rs')
 
+BUILD_FLAGS := -Zjson-target-spec
+
 ifeq ($(MODE), release)
-	BUILD_FLAGS := --release
-else
-	BUILD_FLAGS :=
+	BUILD_FLAGS += --release
 endif
 
 all: run
 
 iso: $(ISO)
+
+kernel: $(KERNEL)
 
 $(KERNEL): $(KERNEL_DEPS)
 	@mkdir -p $(BUILD_DIR)
@@ -56,4 +58,4 @@ clean:
 
 re: clean run
 
-.PHONY: all iso run release deps clean re test
+.PHONY: all iso run release deps clean re test kernel
