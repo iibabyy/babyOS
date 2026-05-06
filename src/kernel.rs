@@ -6,6 +6,8 @@
 
 // #![warn(missing_docs)]
 
+use baby_lib::panic;
+
 mod io;
 
 use baby_lib::panic;

@@ -1,7 +1,8 @@
 MODE		?= debug
 BUILD_DIR	:= build
 TARGET_NAME	:= x86-target
-TARGET_DIR	:= target/$(TARGET_NAME)/$(MODE)
+CARGO_TARGET_DIR ?= target
+TARGET_DIR	:= $(CARGO_TARGET_DIR)/$(TARGET_NAME)/$(MODE)
 KERNEL		?= $(TARGET_DIR)/baby_os
 ISO_DIR		:= $(BUILD_DIR)/isodir
 ISO			:= $(BUILD_DIR)/baby_os.iso
@@ -28,14 +29,15 @@ $(KERNEL): $(KERNEL_DEPS)
 	cargo build $(BUILD_FLAGS)
 
 $(ISO): $(KERNEL) $(GRUBCFG)
+	@rm -rf $(ISO_DIR)
 	@mkdir -p $(ISO_DIR)/boot/grub
 	@cp $(KERNEL) $(ISO_DIR)/boot/babyOS
 	@cp $(GRUBCFG) $(ISO_DIR)/boot/grub/grub.cfg
 	grub-file --is-x86-multiboot $(ISO_DIR)/boot/babyOS
-	grub-mkrescue --compress=xz -o $(ISO) $(ISO_DIR) --modules="normal multiboot part_msdos ext2"
+	grub-mkrescue -o $(ISO) $(ISO_DIR)
 
 run: $(ISO)
-	$(QEMU) -cdrom $(ISO) -m 512M
+	$(QEMU) -cdrom $(ISO) -m 512M -nographic
 
 release:
 	@$(MAKE) --no-print-directory MODE=release
