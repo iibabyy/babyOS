@@ -1,10 +1,8 @@
-use std::{env, path::Path, process::Command};
+use std::{env, path::PathBuf, process::Command};
 
 fn main() {
-    println!("cargo:rerun-if-changed=tools/build/boot.s");
-
-    let out_dir = env::var("BUILD_DIR").unwrap_or("build".to_string());
-    let obj_path = Path::new(&out_dir).join("boot.o");
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set by cargo"));
+    let obj_path = out_dir.join("boot.o");
 
     let status = Command::new("nasm")
         .args([
@@ -21,4 +19,5 @@ fn main() {
     }
 
     println!("cargo:rustc-link-arg={}", obj_path.display());
+    println!("cargo:rerun-if-changed=tools/build/boot.s");
 }
