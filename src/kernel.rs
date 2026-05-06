@@ -8,6 +8,8 @@
 
 mod io;
 
+use baby_lib::panic;
+
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
     #[cfg(test)]
@@ -25,15 +27,6 @@ pub extern "C" fn _entrypoint() -> ! {
     println!("Hello Word{}", " !");
     println!("Hello Word{}", " !");
     println!("Hello Word{}", " !");
-
-    loop {}
-}
-
-use core::panic::PanicInfo;
-
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    println!("{info}");
 
     loop {}
 }
