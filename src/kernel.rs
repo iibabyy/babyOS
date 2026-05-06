@@ -10,8 +10,6 @@ use baby_lib::panic;
 
 mod io;
 
-use baby_lib::panic;
-
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
     #[cfg(test)]
