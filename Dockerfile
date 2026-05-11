@@ -13,6 +13,8 @@ RUN apk update && apk add --no-cache \
     mtools \
     xorriso \
     libisoburn \
+    qemu-ui-curses \
+    ncurses \
     qemu-system-i386
 
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./

@@ -37,7 +37,7 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 	grub-mkrescue -o $(ISO) $(ISO_DIR)
 
 run: $(ISO)
-	$(QEMU) -cdrom $(ISO) -m 512M -nographic
+	$(QEMU) -cdrom $(ISO) -m 512M -display curses
 
 release:
 	@$(MAKE) --no-print-directory MODE=release
