@@ -1,60 +1,36 @@
-//! VGA Text Buffer Memory Structures
-//!
-//! Defines the low-level structures for interacting with the VGA text buffer memory
-
 use volatile::Volatile;
+use crate::io::vga::color_code::ColorCode;
 
-use crate::io::vga::{BUFFER_HEIGHT, BUFFER_WIDTH};
+pub const BUFFER_HEIGHT: usize = 25;
+pub const BUFFER_WIDTH: usize = 80;
 
-// ================================
-// Screen Buffer Structures
-// ================================
+#[repr(transparent)]
+pub struct Buffer {
+    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+impl Buffer {
+    pub fn write(&mut self, row: usize, col: usize, char: ScreenChar) {
+        self.chars[row][col].write(char);
+    }
+
+    pub fn read(&self, row: usize, col: usize) -> ScreenChar {
+        self.chars[row][col].read()
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ScreenChar {
     pub ascii_character: u8,
     pub color_code: ColorCode,
 }
 
-#[repr(transparent)]
-pub struct Buffer {
-    pub chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
-}
-
-// ================================
-// Color Definitions
-// ================================
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-#[allow(dead_code)]
-pub enum Color {
-    Black = 0,
-    Blue = 1,
-    Green = 2,
-    Cyan = 3,
-    Red = 4,
-    Magenta = 5,
-    Brown = 6,
-    LightGray = 7,
-    DarkGray = 8,
-    LightBlue = 9,
-    LightGreen = 10,
-    LightCyan = 11,
-    LightRed = 12,
-    Pink = 13,
-    Yellow = 14,
-    White = 15,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct ColorCode(u8);
-
-impl ColorCode {
-    #[must_use]
-    pub const fn new(foreground: Color, background: Color) -> ColorCode {
-        ColorCode((background as u8) << 4 | (foreground as u8))
+impl ScreenChar {
+    pub fn new(ascii_character: u8, color_code: ColorCode) -> Self {
+        Self {
+            ascii_character,
+            color_code,
+        }
     }
 }

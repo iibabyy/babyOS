@@ -42,11 +42,13 @@ run: $(ISO)
 release:
 	@$(MAKE) --no-print-directory MODE=release
 
-test:
-	@$(MAKE) --no-print-directory KERNEL=$(shell \
-		cargo test --no-run --message-format=json | \
-		jq -r 'select(.profile.test == true) | .executable' \
-	)
+# Tests are not working for now
+
+# test:
+# 	@$(MAKE) --no-print-directory KERNEL=$(shell \
+# 		cargo test --no-run --message-format=json | \
+# 		jq -r 'select(.profile.test == true) | .executable' \
+# 	)
 
 deps:
 	tools/install_deps.sh

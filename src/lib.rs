@@ -1,12 +1,5 @@
 #![no_std]
-
-use core::panic::PanicInfo;
+#![allow(clippy::must_use_candidate)]
 
 pub mod io;
-
-#[panic_handler]
-pub fn panic(info: &PanicInfo) -> ! {
-    println!("{info}");
-
-    loop {}
-}
+pub mod macros;

@@ -6,9 +6,9 @@
 
 // #![warn(missing_docs)]
 
-use baby_lib::panic;
+use core::panic::PanicInfo;
 
-mod io;
+use baby_lib::println;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
@@ -57,6 +57,13 @@ pub extern "C" fn _entrypoint() -> ! {
     println!("40");
     println!("41");
     println!("42");
+
+    loop {}
+}
+
+#[panic_handler]
+pub fn panic(info: &PanicInfo) -> ! {
+    println!("{info}");
 
     loop {}
 }
