@@ -21,10 +21,13 @@ COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 
 COPY tools/ ./tools/
 COPY .cargo/ ./.cargo/
-COPY tests/ ./tests/
 
 ENV BUILD_DIR="build"
 RUN mkdir $BUILD_DIR
+
+RUN mkdir src
+COPY tools/build/dummy/*.rs src/
+RUN cargo build -Zjson-target-spec
 
 COPY src/ ./src/
 RUN cargo build -Zjson-target-spec
