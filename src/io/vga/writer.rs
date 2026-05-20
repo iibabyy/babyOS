@@ -3,20 +3,18 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 use crate::io::vga::{
-    buffer::{Buffer, ScreenChar, BUFFER_HEIGHT, BUFFER_WIDTH},
-    color_code::ColorCode
+    buffer::{BUFFER_HEIGHT, BUFFER_WIDTH, Buffer, ScreenChar},
+    color_code::ColorCode,
     cursor,
 };
 
 lazy_static! {
-    pub static ref GLOBAL_WRITER: Mutex<Writer> = Mutex::new(
-        Writer {
-            column_position: 0,
-            row_position: 0,
-            color_code: ColorCode::default(),
-            buffer: unsafe { &mut *(0xb8000 as *mut Buffer) }
-        }
-    );
+    pub static ref GLOBAL_WRITER: Mutex<Writer> = Mutex::new(Writer {
+        column_position: 0,
+        row_position: 0,
+        color_code: ColorCode::default(),
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) }
+    });
 }
 
 pub struct Writer {
@@ -33,7 +31,7 @@ impl Write for Writer {
         }
 
         unsafe {
-        	cursor::terminal_set_cursor(self.column_position, self.row_position);
+            cursor::terminal_set_cursor(self.column_position, self.row_position);
         }
 
         Ok(())
@@ -64,12 +62,12 @@ impl Writer {
     }
 
     fn move_column_position_by(&mut self, n: usize) {
-    	let mut col_pos = self.column_position + n;
-    	while col_pos >= BUFFER_WIDTH {
-   			self.new_line();
-    		col_pos -= BUFFER_WIDTH;
-    	}
-    	self.column_position = col_pos;
+        let mut col_pos = self.column_position + n;
+        while col_pos >= BUFFER_WIDTH {
+            self.new_line();
+            col_pos -= BUFFER_WIDTH;
+        }
+        self.column_position = col_pos;
     }
 
     /// Moves to the next line, scrolling if necessary

@@ -1,5 +1,5 @@
-use volatile::Volatile;
 use crate::io::vga::color_code::ColorCode;
+use volatile::Volatile;
 
 pub const BUFFER_HEIGHT: usize = 25;
 pub const BUFFER_WIDTH: usize = 80;
