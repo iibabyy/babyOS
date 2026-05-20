@@ -18,7 +18,11 @@ ifeq ($(MODE), release)
 	BUILD_FLAGS += --release
 endif
 
-all: run
+all: docker
+
+docker:
+	docker build . -t babyos
+	docker run -it babyos
 
 iso: $(ISO)
 

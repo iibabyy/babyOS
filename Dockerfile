@@ -34,4 +34,4 @@ RUN cargo build -Zjson-target-spec
 
 COPY Makefile ./
 
-CMD ["make"]
+CMD ["make", "run"]
