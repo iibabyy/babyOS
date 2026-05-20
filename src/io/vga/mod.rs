@@ -1,5 +1,6 @@
 pub mod buffer;
 pub mod color_code;
+pub mod cursor;
 pub mod writer;
 
 #[doc(hidden)]
