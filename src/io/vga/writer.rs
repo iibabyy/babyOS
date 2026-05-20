@@ -44,13 +44,9 @@ impl Writer {
     fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
-            b'\t' => self.column_position += 4 - (self.column_position % 4),
+            b'\t' => self.move_column_position_by(4 - (self.column_position % 4)),
 
             byte => {
-                if self.column_position >= BUFFER_WIDTH {
-                    self.new_line();
-                }
-
                 let byte_to_write = match byte {
                     0x20..=0x7e => byte,
                     _ => 0xfe,
@@ -62,9 +58,18 @@ impl Writer {
                     ScreenChar::new(byte_to_write, self.color_code),
                 );
 
-                self.column_position += 1;
-            },
+                self.move_column_position_by(1);
+            }
         }
+    }
+
+    fn move_column_position_by(&mut self, n: usize) {
+    	let mut col_pos = self.column_position + n;
+    	while col_pos >= BUFFER_WIDTH {
+   			self.new_line();
+    		col_pos -= BUFFER_WIDTH;
+    	}
+    	self.column_position = col_pos;
     }
 
     /// Moves to the next line, scrolling if necessary
