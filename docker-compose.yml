@@ -1,0 +1,19 @@
+services:
+  dev:
+    build: .
+    image: babyos
+    container_name: babyos-dev
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - usr-local:/usr/local/
+      - cargo-target:/workspace/target
+    ports:
+      - "1234:1234"
+    stdin_open: true
+    tty: true
+    command: sleep infinity
+
+volumes:
+  usr-local:
+  cargo-target:
