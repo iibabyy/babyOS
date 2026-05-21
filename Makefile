@@ -20,6 +20,10 @@ endif
 
 all: docker
 
+debug:
+	docker build . -t babyos
+	docker run -it -p 1234:1234 -v ./target:/workspace/target babyos make run-debug
+
 docker:
 	docker build . -t babyos
 	docker run -it babyos
@@ -29,25 +33,27 @@ iso: $(ISO)
 kernel: $(KERNEL)
 
 $(KERNEL): $(KERNEL_DEPS)
-	@mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 	cargo build $(BUILD_FLAGS)
 
 $(ISO): $(KERNEL) $(GRUBCFG)
-	@rm -rf $(ISO_DIR)
-	@mkdir -p $(ISO_DIR)/boot/grub
-	@cp $(KERNEL) $(ISO_DIR)/boot/babyOS
-	@cp $(GRUBCFG) $(ISO_DIR)/boot/grub/grub.cfg
+	rm -rf $(ISO_DIR)
+	mkdir -p $(ISO_DIR)/boot/grub
+	cp $(KERNEL) $(ISO_DIR)/boot/babyOS
+	cp $(GRUBCFG) $(ISO_DIR)/boot/grub/grub.cfg
 	grub-file --is-x86-multiboot $(ISO_DIR)/boot/babyOS
 	grub-mkrescue -o $(ISO) $(ISO_DIR)
 
 run: $(ISO)
 	$(QEMU) -cdrom $(ISO) -m 512M -display curses
 
+run-debug: $(ISO)
+	$(QEMU) -cdrom $(ISO) -m 512M -display curses -s -S
+
 release:
 	@$(MAKE) --no-print-directory MODE=release
 
 # Tests are not working for now
-
 # test:
 # 	@$(MAKE) --no-print-directory KERNEL=$(shell \
 # 		cargo test --no-run --message-format=json | \
@@ -66,4 +72,4 @@ clean:
 
 re: clean run
 
-.PHONY: all iso run release deps clean re test kernel
+.PHONY: all iso run run-debug release deps clean re kernel debug
