@@ -19,7 +19,7 @@ bench = false
 [lib]
 path = "src/lib.rs"
 name = "baby_lib"
-test = false
+test = true
 bench = false
 
 [profile.test]
