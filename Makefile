@@ -23,14 +23,26 @@ all: docker
 # Builds the Docker image and drops you into an interactive container shell
 .PHONY: docker
 docker:
+	docker run -v /usr/local/ -it babyos
+
+docker-build:
 	docker build . -t babyos
-	docker run -it babyos
+	$(MAKE) docker
+
+# Runs an interactive Bash shell inside the Docker container
+.PHONY: sh
+sh:
+	docker run -v /usr/local/ -v ./:/workspace/ -it babyos /bin/sh
 
 # Builds the Docker image and runs it with port 1234 exposed for GDB debugging
 .PHONY: debug
 debug:
-	docker build . -t babyos
-	docker run -it -p 1234:1234 -v ./target:/workspace/target babyos make run-debug
+	docker run -v /usr/local/ -it -p 1234:1234 -v ./target:/workspace/target babyos make run-debug
+
+# Builds the Docker image with the make run-test command to run unit tests
+.PHONY: test
+test:
+	docker run -v /usr/local/ -it -p 1234:1234 -v ./target:/workspace/target babyos make run-test
 
 # Convenience target to trigger the generation of the bootable ISO file
 .PHONY: iso
@@ -64,19 +76,16 @@ run: $(ISO)
 run-debug: $(ISO)
 	$(QEMU) -cdrom $(ISO) -m 512M -display curses -s -S
 
+# Runs the test suite using Cargo
+.PHONY: test
+run-test:
+	mkdir -p $(BUILD_DIR)
+	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.executable != null) | .executable') run
+
 # Re-invokes make, forcing the build mode to release for compiler optimizations
 .PHONY: release
 release:
 	@$(MAKE) --no-print-directory MODE=release
-
-# Tests are not working for now
-# # Runs the kernel test suite by extracting the test binary path from cargo
-# # .PHONY: test
-# # test:
-# # 	@$(MAKE) --no-print-directory KERNEL=$(shell \
-# # 		cargo test --no-run --message-format=json | \
-# # 		jq -r 'select(.profile.test == true) | .executable' \
-# # 	)
 
 # Installs required build dependencies via the provided shell script
 .PHONY: deps

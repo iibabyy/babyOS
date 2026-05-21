@@ -15,7 +15,8 @@ RUN apk update && apk add --no-cache \
     libisoburn \
     qemu-ui-curses \
     ncurses \
-    qemu-system-i386
+    qemu-system-i386 \
+    jq
 
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 
