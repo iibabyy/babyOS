@@ -18,31 +18,40 @@ endif
 
 # Default target: builds and runs the Docker environment
 .PHONY: all
-all: docker
+all: exec
 
-# Builds the Docker image and drops you into an interactive container shell
-.PHONY: docker
-docker:
-	docker run -v /usr/local/ -it babyos
-
+# Build the Docker image via Compose
+.PHONY: docker-build
 docker-build:
-	docker build . -t babyos
-	$(MAKE) docker
+	docker compose build
 
-# Runs an interactive Bash shell inside the Docker container
+# Start the dev container in the background (persistent caches stay warm)
+.PHONY: up
+up:
+	docker compose up -d
+
+# Stop and remove the dev container (named volumes are preserved)
+.PHONY: down
+down:
+	docker compose down
+
+# Drop into a shell: exec into the running container, or one-shot run if none
 .PHONY: sh
 sh:
-	docker run -v /usr/local/ -v ./:/workspace/ -it babyos /bin/sh
+	@if docker compose ps --services --filter status=running | grep -q '^dev$$'; then \
+		docker compose exec dev /bin/sh; \
+	else \
+		docker compose run --rm --service-ports dev /bin/sh; \
+	fi
 
-# Builds the Docker image and runs it with port 1234 exposed for GDB debugging
-.PHONY: debug
-debug:
-	docker run -v /usr/local/ -it -p 1234:1234 -v ./target:/workspace/target babyos make run-debug
+# Back-compat: old `make docker-run` -> start container and drop into a shell
+.PHONY: docker-run
+docker-run: up sh
 
-# Builds the Docker image with the make run-test command to run unit tests
-.PHONY: test
-test:
-	docker run -v /usr/local/ -it -p 1234:1234 -v ./target:/workspace/target babyos make run-test
+# Wipe persistent caches (toolchain + cargo target). Forces a cold rebuild.
+.PHONY: docker-clean
+docker-clean:
+	docker compose down -v
 
 # Convenience target to trigger the generation of the bootable ISO file
 .PHONY: iso
@@ -78,7 +87,7 @@ run-debug: $(ISO)
 
 # Runs the test suite using Cargo
 .PHONY: test
-run-test:
+test:
 	mkdir -p $(BUILD_DIR)
 	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.executable != null) | .executable') run
 
