@@ -9,7 +9,7 @@ ISO              ?= $(BUILD_DIR)/baby_os.iso
 GRUBCFG          ?= tools/build/grub.cfg
 QEMU             ?= qemu-system-i386
 BUILD_TOOLS      ?= $(addprefix tools/build/, boot.s build.rs $(TARGET_NAME).json link.ld)
-KERNEL_DEPS      := $(BUILD_TOOLS) $(shell find src -name '*.rs') $(shell find tests -name '*.rs')
+KERNEL_DEPS      := $(BUILD_TOOLS) $(shell find src -name '*.rs')
 BUILD_FLAGS      := -Zjson-target-spec
 
 ifeq ($(MODE), release)
@@ -18,7 +18,7 @@ endif
 
 # Default target: builds and runs the Docker environment
 .PHONY: all
-all: exec
+all: up
 
 # Build the Docker image via Compose
 .PHONY: docker-build
@@ -36,8 +36,8 @@ down:
 	docker compose down
 
 # Drop into a shell: exec into the running container, or one-shot run if none
-.PHONY: sh
-sh:
+.PHONY: exec
+exec:
 	@if docker compose ps --services --filter status=running | grep -q '^dev$$'; then \
 		docker compose exec dev /bin/sh; \
 	else \
@@ -46,7 +46,7 @@ sh:
 
 # Back-compat: old `make docker-run` -> start container and drop into a shell
 .PHONY: docker-run
-docker-run: up sh
+docker-run: up exec
 
 # Wipe persistent caches (toolchain + cargo target). Forces a cold rebuild.
 .PHONY: docker-clean
@@ -75,21 +75,38 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 	grub-file --is-x86-multiboot $(ISO_DIR)/boot/babyOS
 	grub-mkrescue -o $(ISO) $(ISO_DIR)
 
+# Common QEMU flags shared by every boot target
+QEMU_BASE_FLAGS  := -cdrom $(ISO) -m 512M
+
+# Interactive boot: curses VGA, no host serial mirroring
+QEMU_RUN_FLAGS   := $(QEMU_BASE_FLAGS) -display curses
+
+# Headless boot for tests: no display, COM1 mirrored to host stdio so
+# serial_println! output streams to the terminal that invoked `make test`
+QEMU_TEST_FLAGS  := $(QEMU_BASE_FLAGS) -display none -serial stdio
+
 # Boots the generated ISO image using QEMU in curses mode (terminal display)
 .PHONY: run
 run: $(ISO)
-	$(QEMU) -cdrom $(ISO) -m 512M -display curses
+	$(QEMU) $(QEMU_RUN_FLAGS)
 
 # Boots the ISO in QEMU, pausing at startup (-S) and opening a GDB stub on port 1234 (-s)
 .PHONY: run-debug
 run-debug: $(ISO)
-	$(QEMU) -cdrom $(ISO) -m 512M -display curses -s -S
+	$(QEMU) $(QEMU_RUN_FLAGS) -s -S
+
+# Boots the test kernel ISO headlessly, streaming COM1 to host stdio.
+# Invoked by `test` via a KERNEL= override so the ISO is built from the
+# cargo-test binary instead of the regular kernel.
+.PHONY: run-test
+run-test: $(ISO)
+	$(QEMU) $(QEMU_TEST_FLAGS)
 
 # Runs the test suite using Cargo
 .PHONY: test
 test:
 	mkdir -p $(BUILD_DIR)
-	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.executable != null) | .executable') run
+	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.profile.test == true and .target.kind[] == "bin") | .executable') run-test
 
 # Re-invokes make, forcing the build mode to release for compiler optimizations
 .PHONY: release
@@ -106,12 +123,12 @@ deps:
 uninstall-deps:
 	tools/uninstall_deps.sh
 
-# Cleans up the project by removing the build directory and running cargo clean
+# Cleans up the project: wipes Docker caches/volumes, the build directory, and cargo artifacts
 .PHONY: clean
-clean:
+clean: docker-clean
 	rm -rf $(BUILD_DIR)
 	cargo clean
 
-# Completely cleans the project and then builds and runs the OS fresh
+# Cold restart: wipe persistent caches (named volumes) then start a fresh container
 .PHONY: re
-re: clean run
+re: clean up
