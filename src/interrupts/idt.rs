@@ -1,5 +1,3 @@
-use core::ops::{Index, IndexMut};
-
 use lazy_static::lazy_static;
 use x86::{dtables::{DescriptorTablePointer, lidt}, segmentation::cs};
 

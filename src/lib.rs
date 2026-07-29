@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
-#![allow(clippy::must_use_candidate)]
  
 use core::panic::PanicInfo;
 
