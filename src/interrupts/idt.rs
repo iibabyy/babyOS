@@ -1,26 +1,28 @@
+use core::ops::{Index, IndexMut};
+
 use lazy_static::lazy_static;
 use x86::{dtables::{DescriptorTablePointer, lidt}, segmentation::cs};
 
-use crate::interrupts::breakpoint_handler;
+use crate::interrupts::{self, breakpoint_handler};
 
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();
-
-        // Breakpoint is exception vector 3
-        idt.0[3].set_handler_fn(breakpoint_handler as *const () as u32);
-
+        idt.0[constants::IDT_BREAKPOINT].set_handler_fn(breakpoint_handler as *const () as u32);
         idt
     };
 }
 
 pub fn init_idt() {
     let idt_pointer = DescriptorTablePointer::new_from_slice(&IDT.0);
-
-    // Load it using the x86 crate
     unsafe {
         lidt(&idt_pointer);
     }
+}
+
+pub fn register_interrupt_handler(interrupt_number: usize, handler_ptr: extern "x86-interrupt" fn(&mut interrupts::InterruptStackFrame)) {
+    let mut idt = IDT.0;
+    idt[interrupt_number].set_handler_fn(handler_ptr as u32);
 }
 
 pub struct InterruptDescriptorTable(pub [IdtEntry; 256]);
@@ -56,8 +58,11 @@ impl IdtEntry {
 		self.offset_low = handler_ptr as u16;
 		self.offset_high = (handler_ptr >> 16) as u16;
 
-		// Dynamically fetch the actual Code Segment register
         self.selector = cs().bits();
 		self.type_attr = 0x8E;
 	}
+}
+
+pub mod constants {
+    pub const IDT_BREAKPOINT: usize = 3;
 }
