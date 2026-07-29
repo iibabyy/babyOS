@@ -7,8 +7,10 @@ use core::panic::PanicInfo;
 pub mod vga;
 pub mod macros;
 mod interrupts;
+mod pic;
 
 pub fn init() {
+    pic::init_pics();
     interrupts::idt::init_idt();
 }
 
