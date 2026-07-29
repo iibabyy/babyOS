@@ -4,9 +4,9 @@
  
 use core::panic::PanicInfo;
 
-pub mod io;
+pub mod vga;
 pub mod macros;
-pub mod interrupts;
+mod interrupts;
 
 pub fn init() {
     interrupts::idt::init_idt();

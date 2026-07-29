@@ -2,7 +2,7 @@ use core::fmt::Write;
 use lazy_static::lazy_static;
 use spin::Mutex;
 
-use crate::io::vga::{
+use crate::vga::{
     buffer::{BUFFER_HEIGHT, BUFFER_WIDTH, Buffer, ScreenChar},
     color_code::ColorCode,
     cursor,
