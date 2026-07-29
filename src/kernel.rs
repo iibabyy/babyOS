@@ -5,24 +5,35 @@
 
 use core::arch::asm;
 
-use baby_lib::{interrupts, panic, print, println};
+use baby_lib::println;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
 
-	#[cfg(test)]
-	{
-		baby_lib::run_lib_tests();
-		loop {}
-	}
+	// #[cfg(test)]
+	// {
+	// 	baby_lib::run_lib_tests();
+	// 	loop {}
+	// }
 
-	interrupts::idt::init_idt();
+    baby_lib::init();
 
 	unsafe { asm!("int3"); }
 
     println!("1");
     println!("2");
     println!("3");
+    println!("");
+
+    println!("1");
+    println!("2");
+    println!("3");
+    println!("");
+
+    println!("1");
+    println!("2");
+    println!("3");
+    println!("");
 
     loop {}
 }
