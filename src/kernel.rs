@@ -10,12 +10,6 @@ use baby_lib::println;
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
 
-	// #[cfg(test)]
-	// {
-	// 	baby_lib::run_lib_tests();
-	// 	loop {}
-	// }
-
     baby_lib::init();
 
 	unsafe { asm!("int3"); }

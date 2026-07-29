@@ -12,9 +12,8 @@ BUILD_TOOLS      ?= $(addprefix tools/build/, boot.s build.rs $(TARGET_NAME).jso
 KERNEL_DEPS      := $(BUILD_TOOLS) $(shell find src -name '*.rs')
 BUILD_FLAGS      := -Zjson-target-spec
 
-# Default target: builds the ISO via Docker
 .PHONY: all
-all: iso
+all: run
 
 # Build the ISO using a one-shot Docker container
 .PHONY: iso

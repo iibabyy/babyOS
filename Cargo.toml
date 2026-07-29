@@ -19,10 +19,8 @@ bench = false
 [lib]
 path = "src/lib.rs"
 name = "baby_lib"
-test = true
+test = false
 bench = false
-
-[profile.test]
 
 [dependencies]
 volatile = "0.2.6"
