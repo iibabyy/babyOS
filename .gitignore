@@ -28,3 +28,6 @@ deps/
 # Added by cargo
 
 /target
+/.vscode
+/.zed
+/.gdb_history
