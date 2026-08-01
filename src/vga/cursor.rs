@@ -1,6 +1,4 @@
-use x86::io::outb;
-
-use crate::vga::buffer::{BUFFER_HEIGHT, BUFFER_WIDTH};
+use crate::{shared::outb, vga::buffer::{BUFFER_HEIGHT, BUFFER_WIDTH}};
 
 /// # Safety
 /// The caller must ensure that `x` and `y` are within the bounds of the VGA buffer.

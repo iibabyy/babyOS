@@ -1,6 +1,4 @@
 use lazy_static::lazy_static;
-use x86::{dtables::{DescriptorTablePointer, lidt}, segmentation::cs};
-
 use crate::{idt::{self, breakpoint_handler}, shared::PrivilegeRing};
 use modular_bitfield::prelude::*;
 

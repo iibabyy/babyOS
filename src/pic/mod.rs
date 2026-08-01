@@ -1,4 +1,4 @@
-use x86::io::{inb, outb};
+use crate::shared::{inb, outb};
 
 pub fn io_wait() {
     unsafe { outb(0x80, 0) }
