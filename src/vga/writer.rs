@@ -30,9 +30,7 @@ impl Write for Writer {
             self.write_byte(byte);
         }
 
-        unsafe {
-            cursor::terminal_set_cursor(self.column_position, self.row_position);
-        }
+        self.move_cursor_to_current_pos();
 
         Ok(())
     }
@@ -43,6 +41,7 @@ impl Writer {
         match byte {
             b'\n' => self.new_line(),
             b'\t' => self.move_column_position_by(4 - (self.column_position % 4)),
+            b'\x08' => self.backspace(),
 
             byte => {
                 let byte_to_write = match byte {
@@ -70,16 +69,6 @@ impl Writer {
         self.column_position = col_pos;
     }
 
-    /// Moves to the next line, scrolling if necessary
-    fn new_line(&mut self) {
-        self.column_position = 0;
-        if self.row_position < BUFFER_HEIGHT - 1 {
-            self.row_position += 1;
-        } else {
-            self.scroll_down();
-        }
-    }
-
     fn scroll_down(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
@@ -98,5 +87,54 @@ impl Writer {
         for col in 0..BUFFER_WIDTH {
             self.buffer.write(row, col, blank);
         }
+    }
+
+    fn move_cursor_to_current_pos(&mut self) {
+        unsafe { cursor::terminal_set_cursor(self.column_position, self.row_position) };
+    }
+}
+
+// Key handlers
+impl Writer {
+    /// Moves to the next line, scrolling if necessary
+    fn new_line(&mut self) {
+        self.column_position = 0;
+        if self.row_position < BUFFER_HEIGHT - 1 {
+            self.row_position += 1;
+        } else {
+            self.scroll_down();
+        }
+    }
+
+    pub fn backspace(&mut self) {
+        if self.column_position == 0 {
+            return;
+        }
+
+        self.column_position -= 1;
+
+        self.buffer.write(
+            self.row_position,
+            self.column_position,
+            ScreenChar::new(b' ', self.color_code),
+        );
+
+        self.move_cursor_to_current_pos()
+    }
+
+    pub fn handle_right_arrow(&mut self) {
+        if self.column_position >= BUFFER_WIDTH - 1 {
+            return;
+        }
+        self.column_position += 1;
+        self.move_cursor_to_current_pos()
+    }
+
+    pub fn handle_left_arrow(&mut self) {
+        if self.column_position == 0 {
+            return;
+        }
+        self.column_position -= 1;
+        self.move_cursor_to_current_pos()
     }
 }

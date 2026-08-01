@@ -1,9 +1,9 @@
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => {
+    ($($arg:tt)*) => {{
         #[allow(clippy::used_underscore_items)]
         $crate::_print(format_args!($($arg)*))
-    };
+    }};
 }
 
 #[macro_export]

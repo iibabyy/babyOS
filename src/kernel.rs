@@ -30,5 +30,10 @@ pub extern "C" fn _entrypoint() -> ! {
     println!("3");
     println!("");
 
-    loop {}
+    loop {
+        // puts the CPU to sleep until the next interrupt fires
+        unsafe {
+            asm!("hlt");
+        }
+    }
 }

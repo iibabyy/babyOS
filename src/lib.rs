@@ -7,6 +7,7 @@ use core::panic::PanicInfo;
 
 mod gdt;
 mod idt;
+mod keyboard;
 mod macros;
 mod pic;
 mod shared;
@@ -18,6 +19,7 @@ pub fn init() {
     gdt::init_gdt();
     pic::init_pics();
     idt::init_idt();
+    idt::enable();
 }
 
 #[panic_handler]

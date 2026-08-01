@@ -1,6 +1,6 @@
 use core::arch::asm;
 
-use crate::println;
+use crate::{keyboard::keyboard_interrupt_handler, println};
 
 pub mod entry;
 use entry::{IdtEntry, IdtPointer};
@@ -19,7 +19,7 @@ pub struct InterruptStackFrame {
 #[expect(static_mut_refs)]
 pub fn init_idt() {
     unsafe {
-        register_interrupt_handler(Interrupt::Breakpoint, breakpoint_interrupt_handler);
+        init_interrupt_handlers();
 
         // Tell the CPU the memory address and size of our IDT array
         IDT_PTR.limit = (core::mem::size_of::<[IdtEntry; 256]>() - 1) as u16;
@@ -31,6 +31,11 @@ pub fn init_idt() {
             ptr = in(reg) &IDT_PTR
         );
     }
+}
+
+pub fn init_interrupt_handlers() {
+    register_interrupt_handler(Interrupt::Breakpoint, breakpoint_interrupt_handler);
+    register_interrupt_handler(Interrupt::Keyboard, keyboard_interrupt_handler);
 }
 
 pub fn register_interrupt_handler(
@@ -53,4 +58,19 @@ extern "x86-interrupt" fn breakpoint_interrupt_handler(stack_frame: &mut Interru
 
 pub enum Interrupt {
     Breakpoint = 3,
+    Keyboard = 33,
+}
+
+/// enables CPU hardware interrupts
+pub fn enable() {
+    unsafe {
+        core::arch::asm!("sti");
+    }
+}
+
+/// disables CPU hardware interrupts
+pub fn disable() {
+    unsafe {
+        core::arch::asm!("cli");
+    }
 }
