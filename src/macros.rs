@@ -2,7 +2,7 @@
 macro_rules! print {
     ($($arg:tt)*) => {
         #[allow(clippy::used_underscore_items)]
-        $crate::vga::_print(format_args!($($arg)*))
+        $crate::_print(format_args!($($arg)*))
     };
 }
 

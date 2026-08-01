@@ -7,10 +7,12 @@ use core::panic::PanicInfo;
 
 mod gdt;
 mod idt;
-pub mod macros;
+mod macros;
 mod pic;
 mod shared;
-pub mod vga;
+
+mod vga;
+pub use vga::_print;
 
 pub fn init() {
     gdt::init_gdt();
