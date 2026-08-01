@@ -18,7 +18,7 @@ all: run
 # Build the ISO using a one-shot Docker container
 .PHONY: iso
 iso:
-	docker compose run --rm dev
+	docker compose run --build --rm dev
 
 # Internal native ISO build target (used inside the container via CMD)
 .PHONY: build-iso
@@ -89,4 +89,4 @@ clean: docker-clean
 
 # Cold restart: wipe persistent caches (named volumes) then do a fresh ISO build
 .PHONY: re
-re: clean iso
+re: clean run
