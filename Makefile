@@ -69,7 +69,7 @@ test:
 	mkdir -p $(BUILD_DIR)
 	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.profile.test == true and .target.kind[] == "bin") | .executable') run-test
 debug: iso
-	$(QEMU) $(QEMU_FLAGS) -s -S
+	$(QEMU) $(QEMU_FLAGS) -s -S -no-reboot -d int
 
 # Installs required build dependencies via the provided shell script
 .PHONY: deps

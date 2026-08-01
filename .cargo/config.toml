@@ -1,5 +1,6 @@
 [build]
 target = "tools/build/x86-target.json"
+rustflags = ["-C", "force-frame-pointers=yes"]
 
 [unstable]
 build-std-features = ["compiler-builtins-mem"]
