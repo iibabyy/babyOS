@@ -7,7 +7,7 @@ use core::panic::PanicInfo;
 
 pub mod vga;
 pub mod macros;
-mod interrupts;
+mod idt;
 mod pic;
 mod gdt;
 mod shared;
@@ -15,7 +15,7 @@ mod shared;
 pub fn init() {
     gdt::init_gdt();
     pic::init_pics();
-    interrupts::idt::init_idt();
+    idt::init_idt();
 }
 
 #[panic_handler]
