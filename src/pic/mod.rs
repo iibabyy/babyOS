@@ -22,7 +22,7 @@ pub fn init_pics() {
         outb(PIC2_CMD, 0x11);
         io_wait();
 
-        // Remap offsets    
+        // Remap offsets
         outb(PIC1_DATA, PIC1_OFFSET);
         io_wait();
         outb(PIC2_DATA, PIC2_OFFSET);
@@ -40,7 +40,7 @@ pub fn init_pics() {
         io_wait();
 
         // Disabling everything on both PICs
-        outb(PIC1_DATA, 0xFF); 
+        outb(PIC1_DATA, 0xFF);
         outb(PIC2_DATA, 0xFF);
 
         enable_irq(Irq::Keyboard);
@@ -68,17 +68,21 @@ pub unsafe fn enable_irq(irq: Irq) {
 pub fn send_end_of_interrupt(irq: Irq) {
     // If the interrupt came from the Slave (interrupts 40-47), we thank the Slave
     if irq.is_from_slave_pic() {
-        unsafe { outb(PIC2_CMD, PIC_EOI); }
+        unsafe {
+            outb(PIC2_CMD, PIC_EOI);
+        }
     }
 
     // We always thank the Master since the slave is plugged into it
-    unsafe { outb(PIC1_CMD, PIC_EOI); }
+    unsafe {
+        outb(PIC1_CMD, PIC_EOI);
+    }
 }
 
 #[derive(Clone, Copy)]
 #[repr(u8)]
 pub enum Irq {
-    Keyboard = 1
+    Keyboard = 1,
 }
 
 impl Irq {

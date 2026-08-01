@@ -2,14 +2,12 @@ use core::arch::asm;
 
 use modular_bitfield::Specifier;
 
-
 #[derive(Specifier, Clone, Copy, PartialEq, Eq)]
 #[bits = 2]
 pub enum PrivilegeRing {
     Kernel = 0,
     UserSpace = 3,
 }
-
 
 /// Write 8 bits to port
 #[inline]

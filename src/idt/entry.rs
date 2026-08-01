@@ -1,5 +1,4 @@
 use lazy_static::lazy_static;
-use crate::{idt::{self, breakpoint_handler}, shared::PrivilegeRing};
 use modular_bitfield::prelude::*;
 
 use crate::shared::PrivilegeRing;
@@ -52,13 +51,13 @@ pub struct RawIdtEntry {
 pub struct IdtEntryOptions {
     /// 0xE for 32-bit Interrupt Gate
     pub gate_type: IdtGateType,
-    
+
     /// Must be 0 for interrupt and trap gates
     pub is_storage_segment: bool,
-    
+
     /// Ring 0 (Kernel) or Ring 3 (User Space)
     pub privilege_level: PrivilegeRing,
-    
+
     /// Must be 1 for the IDT entry to be active
     pub is_present: bool,
 }
@@ -70,7 +69,7 @@ pub enum IdtGateType {
     // InterruptGate16 = 0x6,
     // TrapGate16 = 0x7,
     InterruptGate32 = 0xE, // We use this
-    // TrapGate32 = 0xF,
+                           // TrapGate32 = 0xF,
 }
 
 #[repr(C, packed)]

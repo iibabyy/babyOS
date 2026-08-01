@@ -2,15 +2,15 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 #![expect(unused)]
- 
+
 use core::panic::PanicInfo;
 
-pub mod vga;
-pub mod macros;
-mod idt;
-mod pic;
 mod gdt;
+mod idt;
+pub mod macros;
+mod pic;
 mod shared;
+pub mod vga;
 
 pub fn init() {
     gdt::init_gdt();

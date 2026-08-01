@@ -27,7 +27,7 @@ pub fn init_idt() {
 
         // loads the idt
         asm!(
-            "lidt [{ptr}]", 
+            "lidt [{ptr}]",
             ptr = in(reg) &IDT_PTR
         );
     }

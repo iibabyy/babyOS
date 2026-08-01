@@ -11,7 +11,12 @@ impl GdtEntry {
         Self(RawGdtEntry::new())
     }
 
-    pub fn new(base_address: u32, mut limit: u32, access_flags: GtdEntryAccessFlags, flags: GdtEntryFlags) -> Self {
+    pub fn new(
+        base_address: u32,
+        mut limit: u32,
+        access_flags: GtdEntryAccessFlags,
+        flags: GdtEntryFlags,
+    ) -> Self {
         let raw_entry = RawGdtEntry::new()
             .with_access_flags(access_flags)
             .with_flags(flags);
@@ -33,7 +38,6 @@ impl GdtEntry {
     }
 
     fn with_limit(mut self, mut limit: u32) -> Self {
-
         {
             // The maximum limit without granularity is 1MB (0xFFFFF)
             // (with granularity, the CPU uses 4Kb units instead of 1b)
@@ -44,9 +48,7 @@ impl GdtEntry {
                 false
             };
 
-            let new_flags = self.0
-                .flags()
-                .with_granularity(granularity);
+            let new_flags = self.0.flags().with_granularity(granularity);
 
             self.0.set_flags(new_flags);
         }
@@ -96,7 +98,7 @@ pub struct GtdEntryAccessFlags {
     /// - For Data: 0 means segment grows up, 1 means it grows down (stack).
     /// - For Code: 1 means code can be executed from lower privilege levels.
     pub direction: bool,
-    
+
     /// 1 if the CPU can run code here.
     pub is_executable: bool,
 

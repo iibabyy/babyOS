@@ -1,6 +1,9 @@
 use core::arch::asm;
 
-use crate::{gdt::entry::{GdtEntry, GdtEntryFlags, GdtPointer, GtdEntryAccessFlags}, shared::PrivilegeRing};
+use crate::{
+    gdt::entry::{GdtEntry, GdtEntryFlags, GdtPointer, GtdEntryAccessFlags},
+    shared::PrivilegeRing,
+};
 
 pub mod entry;
 
@@ -25,7 +28,7 @@ pub fn init_gdt() {
         load_gdt(
             &GDT_PTR as *const _,
             code_segment_offset,
-            data_segment_offset
+            data_segment_offset,
         );
     }
 }
@@ -39,15 +42,15 @@ unsafe fn load_gdt(ptr: *const GdtPointer, code_segment_offset: u16, data_segmen
             // Load data segments
             "mov ds, {data:x}", // ':x' tells asm! to use a 16-bit register
             "mov es, {data:x}",
-            "mov fs, {data:x}",           
-            "mov gs, {data:x}",           
+            "mov fs, {data:x}",
+            "mov gs, {data:x}",
             "mov ss, {data:x}",
 
         /*
             The CPU forbids updating the code segment (cs register) directly with 'mov'
             To do so, we use retf
             This instruction is used to:
-             - jump to a location/label (by updating eip, the register that holds the next line that the CPU will execute) 
+             - jump to a location/label (by updating eip, the register that holds the next line that the CPU will execute)
              - and to load a new code segment (by updating cs)
             Since we don't want to change the location, we use a mock label
         */
@@ -56,7 +59,7 @@ unsafe fn load_gdt(ptr: *const GdtPointer, code_segment_offset: u16, data_segmen
             "push {code:e}", // the code segment to load
             "lea {tmp}, [2f]", // load the memory address of label 2 into tmp
             "push {tmp}",
-            "retf", 
+            "retf",
             "2:", // the label where retf will jump
 
             // args
@@ -76,13 +79,7 @@ fn kernel_gdt(executable: bool) -> GdtEntry {
         .with_is_executable(executable)
         .with_read_write(true);
 
-    let flags = GdtEntryFlags::new()
-        .with_is_32_bit_operation_size(true);
-    
-    GdtEntry::new(
-        0,
-        0xFFFFFFFF,
-        access_flags,
-        flags
-    )
+    let flags = GdtEntryFlags::new().with_is_32_bit_operation_size(true);
+
+    GdtEntry::new(0, 0xFFFFFFFF, access_flags, flags)
 }
