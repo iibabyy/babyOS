@@ -28,8 +28,6 @@ COPY tools/build/dummy/*.rs src/
 RUN cargo build -Zjson-target-spec
 
 COPY src/ ./src/
-RUN ls src
-RUN cargo clean -p baby-os -Zjson-target-spec
 RUN cargo build -Zjson-target-spec
 
 COPY Makefile ./
