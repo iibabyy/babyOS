@@ -20,15 +20,27 @@ pub extern "C" fn _entrypoint() -> ! {
     println!("3");
     println!("");
 
-    GLOBAL_WRITER.lock().color_code.set_foreground_color(Color::Cyan);
-    GLOBAL_WRITER.lock().color_code.set_background_color(Color::White);
+    GLOBAL_WRITER
+        .lock()
+        .color_code
+        .set_foreground_color(Color::Cyan);
+    GLOBAL_WRITER
+        .lock()
+        .color_code
+        .set_background_color(Color::White);
     println!("1");
     println!("2");
     println!("3");
     println!("");
 
-    GLOBAL_WRITER.lock().color_code.set_foreground_color(Color::White);
-    GLOBAL_WRITER.lock().color_code.set_background_color(Color::Black);
+    GLOBAL_WRITER
+        .lock()
+        .color_code
+        .set_foreground_color(Color::White);
+    GLOBAL_WRITER
+        .lock()
+        .color_code
+        .set_background_color(Color::Black);
     println!("1");
     println!("2");
     println!("3");

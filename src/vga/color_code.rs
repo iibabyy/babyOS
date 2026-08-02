@@ -24,22 +24,21 @@ pub enum Color {
 #[repr(transparent)]
 pub struct ColorCode(u8);
 
-impl Default for ColorCode {
-    fn default() -> Self {
-        Self::new(Color::White, Color::Black)
-    }
-}
-
 impl ColorCode {
     #[must_use]
     pub const fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
 
+    #[must_use]
+    pub const fn default() -> ColorCode {
+        ColorCode::new(Color::White, Color::Black)
+    }
+
     pub const fn set_background_color(&mut self, background: Color) {
         self.0 = (background as u8) << 4 | (self.0 & 0x0F);
     }
-    
+
     pub const fn set_foreground_color(&mut self, foreground: Color) {
         self.0 = (self.0 & 0xF0) | (foreground as u8);
     }

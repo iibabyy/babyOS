@@ -27,10 +27,16 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Inte
         // caps lock
         0x3A => toggle_caps_lock(),
 
+        // Function Keys F1 - F4
+        0x3B => crate::vga::handle_shortcut_switch_screen(0), // F1
+        0x3C => crate::vga::handle_shortcut_switch_screen(1), // F2
+        0x3D => crate::vga::handle_shortcut_switch_screen(2), // F3
+        0x3E => crate::vga::handle_shortcut_switch_screen(3), // F4
+
         _ if next_scancode_extended() => {
             match scancode {
-                0x4B => vga::writer::GLOBAL_WRITER.lock().handle_left_arrow(),
-                0x4D => vga::writer::GLOBAL_WRITER.lock().handle_right_arrow(),
+                0x4B => vga::GLOBAL_WRITER.lock().handle_left_arrow(),
+                0x4D => vga::GLOBAL_WRITER.lock().handle_right_arrow(),
 
                 0x53 => { /* DELETE (not backspace) */ }
                 0x48 => { /* UP */ }

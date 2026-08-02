@@ -1,12 +1,13 @@
-use crate::vga::color_code::ColorCode;
+use crate::vga::ColorCode;
 use volatile::Volatile;
 
-pub const BUFFER_HEIGHT: usize = 25;
-pub const BUFFER_WIDTH: usize = 80;
+pub const VGA_BUFFER_HEIGHT: usize = 25;
+pub const VGA_BUFFER_WIDTH: usize = 80;
+pub const VGA_BUFFER_ADDRESS: *mut u16 = 0xB8000 as *mut u16;
 
 #[repr(transparent)]
 pub struct Buffer {
-    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    pub chars: [[Volatile<ScreenChar>; VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT],
 }
 
 impl Buffer {
@@ -28,9 +29,13 @@ pub struct ScreenChar {
 
 impl ScreenChar {
     pub fn new(byte: u8, color_code: ColorCode) -> Self {
+        Self { byte, color_code }
+    }
+
+    pub const fn default() -> Self {
         Self {
-            byte,
-            color_code,
+            byte: 0,
+            color_code: ColorCode::default(),
         }
     }
 }

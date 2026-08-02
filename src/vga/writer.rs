@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 use crate::vga::{
-    self, buffer::{BUFFER_HEIGHT, BUFFER_WIDTH, Buffer, ScreenChar}, color_code::ColorCode, cursor,
+    self, Buffer, ColorCode, ScreenChar, VGA_BUFFER_ADDRESS, VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH,
 };
 
 lazy_static! {
@@ -11,7 +11,7 @@ lazy_static! {
         column_position: 0,
         row_position: 0,
         color_code: ColorCode::default(),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) }
+        buffer: unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) }
     });
 }
 
@@ -64,37 +64,42 @@ impl Writer {
 
     fn move_column_position_by(&mut self, n: usize) {
         let mut col_pos = self.column_position + n;
-        while col_pos >= BUFFER_WIDTH {
+        while col_pos >= VGA_BUFFER_WIDTH {
             self.new_line();
-            col_pos -= BUFFER_WIDTH;
+            col_pos -= VGA_BUFFER_WIDTH;
         }
         self.column_position = col_pos;
     }
 
     fn scroll_down(&mut self) {
-        for row in 1..BUFFER_HEIGHT {
-            for col in 0..BUFFER_WIDTH {
+        for row in 1..VGA_BUFFER_HEIGHT {
+            for col in 0..VGA_BUFFER_WIDTH {
                 let char = self.buffer.read(row, col);
                 self.buffer.write(row - 1, col, char);
             }
         }
 
-        self.clear_row(BUFFER_HEIGHT - 1);
+        self.clear_row(VGA_BUFFER_HEIGHT - 1);
     }
 
     /// Clears a single row with blank characters
     fn clear_row(&mut self, row: usize) {
         let blank = ScreenChar::new(b' ', self.color_code);
 
-        for col in 0..BUFFER_WIDTH {
+        for col in 0..VGA_BUFFER_WIDTH {
             self.buffer.write(row, col, blank);
         }
     }
 
-    fn move_cursor_to_current_pos(&mut self) {
-        unsafe { cursor::terminal_set_cursor(self.column_position, self.row_position) };
+    pub fn move_cursor_pos(&mut self, col: usize, row: usize) {
+        self.column_position = col.min(VGA_BUFFER_WIDTH - 1);
+        self.row_position = row.min(VGA_BUFFER_HEIGHT - 1);
+        self.move_cursor_to_current_pos();
     }
 
+    fn move_cursor_to_current_pos(&mut self) {
+        unsafe { vga::terminal_set_cursor(self.column_position, self.row_position) };
+    }
 }
 
 // Key handlers
@@ -102,7 +107,7 @@ impl Writer {
     /// Moves to the next line, scrolling if necessary
     fn new_line(&mut self) {
         self.column_position = 0;
-        if self.row_position < BUFFER_HEIGHT - 1 {
+        if self.row_position < VGA_BUFFER_HEIGHT - 1 {
             self.row_position += 1;
         } else {
             self.scroll_down();
@@ -122,7 +127,7 @@ impl Writer {
     }
 
     pub fn handle_right_arrow(&mut self) {
-        if self.column_position >= BUFFER_WIDTH - 1 {
+        if self.column_position >= VGA_BUFFER_WIDTH - 1 {
             return;
         }
         self.column_position += 1;
