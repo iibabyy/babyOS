@@ -15,36 +15,40 @@ pub extern "C" fn _entrypoint() -> ! {
         asm!("int3");
     }
 
-    println!("1");
-    println!("2");
-    println!("3");
-    println!("");
+    // unsafe {
+    //     asm!("int3");
+    // }
 
-    GLOBAL_WRITER
-        .lock()
-        .color_code
-        .set_foreground_color(Color::Cyan);
-    GLOBAL_WRITER
-        .lock()
-        .color_code
-        .set_background_color(Color::White);
-    println!("1");
-    println!("2");
-    println!("3");
-    println!("");
+    // println!("1");
+    // println!("2");
+    // println!("3");
+    // println!("");
 
-    GLOBAL_WRITER
-        .lock()
-        .color_code
-        .set_foreground_color(Color::White);
-    GLOBAL_WRITER
-        .lock()
-        .color_code
-        .set_background_color(Color::Black);
-    println!("1");
-    println!("2");
-    println!("3");
-    println!("");
+    // GLOBAL_WRITER
+    //     .lock()
+    //     .color_code
+    //     .set_foreground_color(Color::Cyan);
+    // GLOBAL_WRITER
+    //     .lock()
+    //     .color_code
+    //     .set_background_color(Color::White);
+    // println!("1");
+    // println!("2");
+    // println!("3");
+    // println!("");
+
+    // GLOBAL_WRITER
+    //     .lock()
+    //     .color_code
+    //     .set_foreground_color(Color::White);
+    // GLOBAL_WRITER
+    //     .lock()
+    //     .color_code
+    //     .set_background_color(Color::Black);
+    // println!("1");
+    // println!("2");
+    // println!("3");
+    // println!("");
 
     loop {
         // puts the CPU to sleep until the next interrupt fires
