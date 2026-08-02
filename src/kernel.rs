@@ -11,7 +11,7 @@ use baby_lib::{Color, GLOBAL_WRITER, dump_kernel_stack, println};
 pub extern "C" fn _entrypoint() -> ! {
     baby_lib::init();
 
-	test_my_stack();
+    // test_my_stack();
     // println!("42");
 
     // unsafe {
@@ -49,24 +49,19 @@ pub extern "C" fn _entrypoint() -> ! {
     // println!("3");
     // println!("");
 
-    loop {
-        // puts the CPU to sleep until the next interrupt fires
-        unsafe {
-            asm!("hlt");
-        }
-    }
+    baby_lib::shell_loop();
 }
 
-#[inline(never)] 
+#[inline(never)]
 pub fn test_my_stack() {
-    let a: u32 = 0xDEADBEEF; 
+    let a: u32 = 0xDEADBEEF;
     let b: u32 = 0xCAFEBABE;
 
-    crate::println!("Variables live at: {:p} and {:p}", &a, &b); 
+    crate::println!("Variables live at: {:p} and {:p}", &a, &b);
 
-	dump_kernel_stack();
+    dump_kernel_stack();
 
-	// so the compiler don't drop them too early
-	core::hint::black_box(a);
-	core::hint::black_box(b);
+    // so the compiler don't drop them too early
+    core::hint::black_box(a);
+    core::hint::black_box(b);
 }

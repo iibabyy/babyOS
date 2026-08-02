@@ -10,6 +10,9 @@ mod macros;
 mod pic;
 mod shared;
 
+mod shell;
+pub use shell::shell_loop;
+
 mod gdt;
 pub use gdt::dump::dump_kernel_stack;
 
@@ -21,8 +24,8 @@ pub fn init() {
     pic::init_pics();
     unsafe {
         idt::init_idt();
-        idt::enable();
-    }    
+        idt::enable_hardware_interrupts();
+    }
 }
 
 #[panic_handler]
