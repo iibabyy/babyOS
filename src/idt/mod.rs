@@ -16,8 +16,10 @@ pub struct InterruptStackFrame {
     pub cpu_flags: u32,
 }
 
+
+/// SAFETY: GDT must be initialized
 #[expect(static_mut_refs)]
-pub fn init_idt() {
+pub unsafe fn init_idt() {
     unsafe {
         init_interrupt_handlers();
 
@@ -62,7 +64,9 @@ pub enum Interrupt {
 }
 
 /// enables CPU hardware interrupts
-pub fn enable() {
+/// 
+/// Safety: IDT must be initialized
+pub unsafe fn enable() {
     unsafe {
         core::arch::asm!("sti");
     }

@@ -17,8 +17,10 @@ pub use vga::{_print, Color, GLOBAL_WRITER};
 pub fn init() {
     gdt::init_gdt();
     pic::init_pics();
-    idt::init_idt();
-    idt::enable();
+    unsafe {
+        idt::init_idt();
+        idt::enable();
+    }    
 }
 
 #[panic_handler]
