@@ -4,12 +4,14 @@
 
 use core::panic::PanicInfo;
 
-mod gdt;
 mod idt;
 mod keyboard;
 mod macros;
 mod pic;
 mod shared;
+
+mod gdt;
+pub use gdt::dump::dump_kernel_stack;
 
 mod vga;
 pub use vga::{_print, Color, GLOBAL_WRITER};

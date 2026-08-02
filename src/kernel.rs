@@ -5,15 +5,14 @@
 
 use core::arch::asm;
 
-use baby_lib::{Color, GLOBAL_WRITER, println};
+use baby_lib::{Color, GLOBAL_WRITER, dump_kernel_stack, println};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
     baby_lib::init();
 
-    unsafe {
-        asm!("int3");
-    }
+	test_my_stack();
+    // println!("42");
 
     // unsafe {
     //     asm!("int3");
@@ -56,4 +55,18 @@ pub extern "C" fn _entrypoint() -> ! {
             asm!("hlt");
         }
     }
+}
+
+#[inline(never)] 
+pub fn test_my_stack() {
+    let a: u32 = 0xDEADBEEF; 
+    let b: u32 = 0xCAFEBABE;
+
+    crate::println!("Variables live at: {:p} and {:p}", &a, &b); 
+
+	dump_kernel_stack();
+
+	// so the compiler don't drop them too early
+	core::hint::black_box(a);
+	core::hint::black_box(b);
 }
