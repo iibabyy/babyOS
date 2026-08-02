@@ -35,8 +35,8 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Inte
 
         _ if next_scancode_extended() => {
             match scancode {
-                0x4B => vga::GLOBAL_WRITER.lock().handle_left_arrow(),
-                0x4D => vga::GLOBAL_WRITER.lock().handle_right_arrow(),
+                // 0x4B => vga::GLOBAL_WRITER.lock().handle_left_arrow(),
+                // 0x4D => vga::GLOBAL_WRITER.lock().handle_right_arrow(),
 
                 0x53 => { /* DELETE (not backspace) */ }
                 0x48 => { /* UP */ }
