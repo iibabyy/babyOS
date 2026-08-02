@@ -13,7 +13,7 @@ impl GdtEntry {
 
     pub fn new(
         base_address: u32,
-        mut limit: u32,
+        limit: u32,
         access_flags: GtdEntryAccessFlags,
         flags: GdtEntryFlags,
     ) -> Self {

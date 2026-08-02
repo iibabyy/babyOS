@@ -68,9 +68,9 @@ pub fn enable() {
     }
 }
 
-/// disables CPU hardware interrupts
-pub fn disable() {
-    unsafe {
-        core::arch::asm!("cli");
-    }
-}
+// /// disables CPU hardware interrupts
+// pub fn disable() {
+//     unsafe {
+//         core::arch::asm!("cli");
+//     }
+// }
