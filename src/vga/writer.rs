@@ -1,18 +1,28 @@
 use core::fmt::Write;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use volatile::Volatile;
 
 use crate::vga::{
     self, Buffer, ColorCode, ScreenChar, VGA_BUFFER_ADDRESS, VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH,
 };
 
 lazy_static! {
-    pub static ref GLOBAL_WRITER: Mutex<Writer> = Mutex::new(Writer {
-        column_position: 0,
-        row_position: 0,
-        color_code: ColorCode::default(),
-        buffer: unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) }
-    });
+    pub static ref GLOBAL_WRITER: Mutex<Writer> = {
+		let buffer = unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) };
+
+		// sets all bytes in the buffer to 0
+		buffer.chars.iter_mut().for_each(|tab|
+			tab.fill(Volatile::new(ScreenChar::default()))
+		);
+
+		Mutex::new(Writer {
+			column_position: 0,
+			row_position: 0,
+			color_code: ColorCode::default(),
+			buffer
+		})
+	};
 }
 
 pub struct Writer {
@@ -121,7 +131,7 @@ impl Writer {
 
         self.column_position -= 1;
 
-        self.write_at_current_pos(b' ');
+        self.write_at_current_pos(0);
 
         self.move_cursor_to_current_pos()
     }
@@ -130,6 +140,12 @@ impl Writer {
         if self.column_position >= VGA_BUFFER_WIDTH - 1 {
             return;
         }
+
+		let current_char = self.buffer.read(self.row_position, self.column_position);
+		if current_char.byte == 0 {
+			return;
+		}
+
         self.column_position += 1;
         self.move_cursor_to_current_pos()
     }
