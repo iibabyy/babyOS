@@ -1,7 +1,8 @@
 use core::arch::asm;
 
 use crate::{
-    gdt::entry::{GdtEntry, GdtEntryFlags, GdtPointer, GtdEntryAccessFlags}, shared::PrivilegeRing,
+    gdt::entry::{GdtEntry, GdtEntryFlags, GdtPointer, GtdEntryAccessFlags},
+    shared::PrivilegeRing,
 };
 
 pub mod dump;
@@ -16,52 +17,45 @@ const GDT_ADDRESS: *mut GdtEntry = GDT_BASE as *mut GdtEntry;
 const GDT_PTR_ADDRESS: *mut GdtPointer = (GDT_BASE + GDT_SIZE) as *mut GdtPointer;
 
 pub fn init_gdt() {
-        let gdt = unsafe { core::slice::from_raw_parts_mut(GDT_ADDRESS, GDT_LEN) };
+    let gdt = unsafe { core::slice::from_raw_parts_mut(GDT_ADDRESS, GDT_LEN) };
 
-		gdt[0] = GdtEntry::zeroed();						// Must be Null
-		gdt[1] = kernel_gdt(MemoryType::Code);	// Kernel Code
-		gdt[2] = kernel_gdt(MemoryType::Data);	// Kernel Data
-		gdt[3] = kernel_gdt(MemoryType::Data);	// Kernel Stack
-		gdt[4] = user_gdt(MemoryType::Code);		// User Code
-		gdt[5] = user_gdt(MemoryType::Data);		// User Data
-		gdt[6] = user_gdt(MemoryType::Data);		// User Stack
+    gdt[0] = GdtEntry::zeroed(); // Must be Null
+    gdt[1] = kernel_gdt(MemoryType::Code); // Kernel Code
+    gdt[2] = kernel_gdt(MemoryType::Data); // Kernel Data
+    gdt[3] = kernel_gdt(MemoryType::Data); // Kernel Stack
+    gdt[4] = user_gdt(MemoryType::Code); // User Code
+    gdt[5] = user_gdt(MemoryType::Data); // User Data
+    gdt[6] = user_gdt(MemoryType::Data); // User Stack
 
-		let gdt_ptr = unsafe { &mut *GDT_PTR_ADDRESS };
-		gdt_ptr.base = GDT_BASE as u32;
-		gdt_ptr.limit = GDT_SIZE as u16 - 1;
+    let gdt_ptr = unsafe { &mut *GDT_PTR_ADDRESS };
+    gdt_ptr.base = GDT_BASE as u32;
+    gdt_ptr.limit = GDT_SIZE as u16 - 1;
 
-		// offset of kernel code/data GDT entries, relative to ptr.base (GDT_BASE)
-	    let kcode_offset = core::mem::size_of::<GdtEntry>() as u32;
-        let kdata_offset = 2 * core::mem::size_of::<GdtEntry>() as u16;
-		let kstack_offset = 3 * core::mem::size_of::<GdtEntry>() as u16;
+    // offset of kernel code/data GDT entries, relative to ptr.base (GDT_BASE)
+    let kcode_offset = core::mem::size_of::<GdtEntry>() as u32;
+    let kdata_offset = 2 * core::mem::size_of::<GdtEntry>() as u16;
+    let kstack_offset = 3 * core::mem::size_of::<GdtEntry>() as u16;
 
-		unsafe {
-			load_gdt(
-				GDT_PTR_ADDRESS,
-				kcode_offset,
-				kdata_offset,
-				kstack_offset,
-        	)
-		};
+    unsafe { load_gdt(GDT_PTR_ADDRESS, kcode_offset, kdata_offset, kstack_offset) };
 }
 
 // SAFETY: ptr must point to a valid GdtPointer, and other args must be correct
 unsafe fn load_gdt(
-	ptr: *const GdtPointer,
+    ptr: *const GdtPointer,
 
-	// offset of kernel code/data GDT entries, relative to ptr.base (GDT_BASE)
-	kcode_offset: u32,
-	kdata_offset: u16,
-	kstack_offset: u16
+    // offset of kernel code/data GDT entries, relative to ptr.base (GDT_BASE)
+    kcode_offset: u32,
+    kdata_offset: u16,
+    kstack_offset: u16,
 ) {
     unsafe {
         asm!(
             // Load the GDT pointer
-			// ':e' tells asm! to use a 32-bit register
+            // ':e' tells asm! to use a 32-bit register
             "lgdt [{ptr}]",
 
             // Load data segments
-			// ':x' tells asm! to use a 16-bit register
+            // ':x' tells asm! to use a 16-bit register
             "mov ds, {data:x}", // data segment
             "mov ss, {stack:x}", // stack segment
             "mov es, {data:x}",
@@ -93,7 +87,7 @@ unsafe fn load_gdt(
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum MemoryType {
     Code,
-    Data
+    Data,
 }
 
 fn kernel_gdt(mem_type: MemoryType) -> GdtEntry {

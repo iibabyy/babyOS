@@ -9,20 +9,20 @@ use crate::vga::{
 
 lazy_static! {
     pub static ref GLOBAL_WRITER: Mutex<Writer> = {
-		let buffer = unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) };
+        let buffer = unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) };
 
-		// sets all bytes in the buffer to 0
-		buffer.chars.iter_mut().for_each(|tab|
-			tab.fill(Volatile::new(ScreenChar::default()))
-		);
+        // sets all bytes in the buffer to 0
+        buffer.chars.iter_mut().for_each(|tab|
+            tab.fill(Volatile::new(ScreenChar::default()))
+        );
 
-		Mutex::new(Writer {
-			column_position: 0,
-			row_position: 0,
-			color_code: ColorCode::default(),
-			buffer
-		})
-	};
+        Mutex::new(Writer {
+            column_position: 0,
+            row_position: 0,
+            color_code: ColorCode::default(),
+            buffer
+        })
+    };
 }
 
 pub struct Writer {
@@ -141,10 +141,10 @@ impl Writer {
             return;
         }
 
-		let current_char = self.buffer.read(self.row_position, self.column_position);
-		if current_char.byte == 0 {
-			return;
-		}
+        let current_char = self.buffer.read(self.row_position, self.column_position);
+        if current_char.byte == 0 {
+            return;
+        }
 
         self.column_position += 1;
         self.move_cursor_to_current_pos()

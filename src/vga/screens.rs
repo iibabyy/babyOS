@@ -31,7 +31,7 @@ pub fn switch_screen(
     new_index: usize,
     current_col_pos: usize,
     current_row_pos: usize,
-    current_color_code: ColorCode
+    current_color_code: ColorCode,
 ) -> Option<(usize, usize, ColorCode)> {
     unsafe {
         if new_index >= SCREENS.len() || new_index == ACTIVE_SCREEN_INDEX {
@@ -69,7 +69,7 @@ pub fn handle_shortcut_switch_screen(new_index: usize) {
         new_index,
         writer.column_position,
         writer.row_position,
-        writer.color_code
+        writer.color_code,
     );
 
     if let Some((new_col, new_row, new_color_code)) = res {
