@@ -22,14 +22,14 @@ impl Buffer {
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct ScreenChar {
-    pub ascii_character: u8,
+    pub byte: u8,
     pub color_code: ColorCode,
 }
 
 impl ScreenChar {
-    pub fn new(ascii_character: u8, color_code: ColorCode) -> Self {
+    pub fn new(byte: u8, color_code: ColorCode) -> Self {
         Self {
-            ascii_character,
+            byte,
             color_code,
         }
     }

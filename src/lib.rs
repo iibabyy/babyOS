@@ -13,7 +13,7 @@ mod pic;
 mod shared;
 
 mod vga;
-pub use vga::_print;
+pub use vga::{_print, writer::GLOBAL_WRITER, color_code::Color};
 
 pub fn init() {
     gdt::init_gdt();

@@ -3,9 +3,7 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 use crate::vga::{
-    buffer::{BUFFER_HEIGHT, BUFFER_WIDTH, Buffer, ScreenChar},
-    color_code::ColorCode,
-    cursor,
+    self, buffer::{BUFFER_HEIGHT, BUFFER_WIDTH, Buffer, ScreenChar}, color_code::ColorCode, cursor,
 };
 
 lazy_static! {
@@ -49,15 +47,19 @@ impl Writer {
                     _ => 0xfe,
                 };
 
-                self.buffer.write(
-                    self.row_position,
-                    self.column_position,
-                    ScreenChar::new(byte_to_write, self.color_code),
-                );
+                self.write_at_current_pos(byte_to_write);
 
                 self.move_column_position_by(1);
             }
         }
+    }
+
+    fn write_at_current_pos(&mut self, byte: u8) {
+        self.buffer.write(
+            self.row_position,
+            self.column_position,
+            ScreenChar::new(byte, self.color_code),
+        );
     }
 
     fn move_column_position_by(&mut self, n: usize) {
@@ -92,6 +94,7 @@ impl Writer {
     fn move_cursor_to_current_pos(&mut self) {
         unsafe { cursor::terminal_set_cursor(self.column_position, self.row_position) };
     }
+
 }
 
 // Key handlers
@@ -113,11 +116,7 @@ impl Writer {
 
         self.column_position -= 1;
 
-        self.buffer.write(
-            self.row_position,
-            self.column_position,
-            ScreenChar::new(b' ', self.color_code),
-        );
+        self.write_at_current_pos(b' ');
 
         self.move_cursor_to_current_pos()
     }

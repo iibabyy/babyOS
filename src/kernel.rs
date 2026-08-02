@@ -5,7 +5,7 @@
 
 use core::arch::asm;
 
-use baby_lib::println;
+use baby_lib::{Color, GLOBAL_WRITER, println};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint() -> ! {
@@ -20,11 +20,15 @@ pub extern "C" fn _entrypoint() -> ! {
     println!("3");
     println!("");
 
+    GLOBAL_WRITER.lock().color_code.set_foreground_color(Color::Cyan);
+    GLOBAL_WRITER.lock().color_code.set_background_color(Color::White);
     println!("1");
     println!("2");
     println!("3");
     println!("");
 
+    GLOBAL_WRITER.lock().color_code.set_foreground_color(Color::White);
+    GLOBAL_WRITER.lock().color_code.set_background_color(Color::Black);
     println!("1");
     println!("2");
     println!("3");
