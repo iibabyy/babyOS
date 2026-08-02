@@ -1,5 +1,7 @@
 use core::arch::asm;
 
+use crate::println;
+
 // dump the stack of the caller function
 pub fn dump_kernel_stack() {
     let mut ebp: u32;
@@ -15,15 +17,26 @@ pub fn dump_kernel_stack() {
     let caller_ebp = unsafe { *(ebp as *const u32) };
 	let mut current_ptr = ebp + 4;
 
+	let mut lines = 0;
+	let mut hidden = 0;
+
     crate::println!("=== KERNEL STACK DUMP ===");
     while current_ptr <= caller_ebp {
         let value = unsafe { *(current_ptr as *const u32) };
 
-		crate::println!("{:#010X}: {:#010X}", current_ptr, value);
-        
-        current_ptr += 4;
+		if lines < 15 {
+			crate::println!("{:#010X}: {:#010X}", current_ptr, value);
+		} else {
+			hidden += 1;
+		}
 
-		unsafe {asm!("hlt")};
+        current_ptr += 4;
+		lines += 1;
     }
+
+	if hidden > 0 {
+		println!("+{hidden}...");
+	}
+
     crate::println!("=========================");
 }
