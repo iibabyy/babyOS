@@ -7,7 +7,6 @@ services:
     volumes:
       - .:/workspace
       - usr-local:/usr/local/
-      - cargo-target:/workspace/target
 
 volumes:
   usr-local:
