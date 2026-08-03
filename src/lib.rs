@@ -17,8 +17,13 @@ pub use vga::{_print, Color, GLOBAL_WRITER};
 pub fn init() {
     gdt::init_gdt();
     pic::init_pics();
-    unsafe {
+    
+	unsafe {
+		// SAFETY: GDT is initialized
         idt::init_idt();
+
+		// enables CPU hardware interrupts (e.g. keyboard keys)
+		// SAFETY: IDT is initialized
         idt::enable();
     }    
 }

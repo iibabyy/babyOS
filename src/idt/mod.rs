@@ -8,6 +8,7 @@ use entry::{IdtEntry, IdtPointer};
 static mut IDT: [IdtEntry; 256] = [IdtEntry::zeroed(); 256];
 static mut IDT_PTR: IdtPointer = IdtPointer { limit: 0, base: 0 };
 
+/// The stack frame that interrupt handlers receive as arguments when they are called
 #[derive(Debug)]
 #[repr(C)]
 pub struct InterruptStackFrame {
@@ -16,7 +17,8 @@ pub struct InterruptStackFrame {
     pub cpu_flags: u32,
 }
 
-
+/// Initialize the IDT table
+/// 
 /// SAFETY: GDT must be initialized
 #[expect(static_mut_refs)]
 pub unsafe fn init_idt() {
@@ -35,11 +37,13 @@ pub unsafe fn init_idt() {
     }
 }
 
+/// Initialize our interrupt handlers
 pub fn init_interrupt_handlers() {
     register_interrupt_handler(Interrupt::Breakpoint, breakpoint_interrupt_handler);
     register_interrupt_handler(Interrupt::Keyboard, keyboard_interrupt_handler);
 }
 
+/// Sets an handler for an Interrupt
 pub fn register_interrupt_handler(
     interrupt: Interrupt,
     handler: extern "x86-interrupt" fn(&mut InterruptStackFrame),
@@ -53,17 +57,17 @@ pub fn register_interrupt_handler(
     }
 }
 
-// The Breakpoint Handler
 extern "x86-interrupt" fn breakpoint_interrupt_handler(stack_frame: &mut InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
+/// Interrupt IDs
 pub enum Interrupt {
     Breakpoint = 3,
     Keyboard = 33,
 }
 
-/// enables CPU hardware interrupts
+/// Enables CPU hardware interrupts (e.g. keyboard keys)
 /// 
 /// Safety: IDT must be initialized
 pub unsafe fn enable() {
@@ -72,7 +76,7 @@ pub unsafe fn enable() {
     }
 }
 
-// /// disables CPU hardware interrupts
+// /// Disables CPU hardware interrupts
 // pub fn disable() {
 //     unsafe {
 //         core::arch::asm!("cli");

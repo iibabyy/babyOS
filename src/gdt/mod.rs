@@ -10,6 +10,7 @@ pub mod entry;
 static mut GDT: [GdtEntry; 3] = [GdtEntry::zeroed(); 3];
 static mut GDT_PTR: GdtPointer = GdtPointer { limit: 0, base: 0 };
 
+/// Inits the GDT table
 #[expect(static_mut_refs)]
 pub fn init_gdt() {
     unsafe {
@@ -33,6 +34,7 @@ pub fn init_gdt() {
     }
 }
 
+/// Tells the CPU to load a GDT pointer
 unsafe fn load_gdt(ptr: *const GdtPointer, code_segment_offset: u16, data_segment_offset: u16) {
     unsafe {
         asm!(
@@ -71,6 +73,7 @@ unsafe fn load_gdt(ptr: *const GdtPointer, code_segment_offset: u16, data_segmen
     }
 }
 
+/// Creates a GDT entry for kernel code/data 
 fn kernel_gdt(executable: bool) -> GdtEntry {
     let access_flags = GtdEntryAccessFlags::new()
         .with_is_present(true)

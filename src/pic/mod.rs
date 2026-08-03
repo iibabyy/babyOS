@@ -14,6 +14,7 @@ const PIC2_OFFSET: u8 = 40;
 
 const PIC_EOI: u8 = 0x20;
 
+/// Initialize the Master and Slave PICs
 pub fn init_pics() {
     unsafe {
         // Start initialization
@@ -39,15 +40,16 @@ pub fn init_pics() {
         outb(PIC2_DATA, 0x01);
         io_wait();
 
-        // Disabling everything on both PICs
+        // Disabling every IRQs on both PICs
         outb(PIC1_DATA, 0xFF);
         outb(PIC2_DATA, 0xFF);
 
+		// Then enabling only IRQs that we use
         enable_irq(Irq::Keyboard);
     }
 }
 
-// SAFETY: pics must be initialized
+/// SAFETY: pics must be initialized
 pub unsafe fn enable_irq(irq: Irq) {
     let port;
     let mut relative_id = irq as u8;
@@ -65,6 +67,7 @@ pub unsafe fn enable_irq(irq: Irq) {
     unsafe { outb(port, mask) };
 }
 
+/// Tells to Slave/Master PICs that we finished to handle an IRQ
 pub fn send_end_of_interrupt(irq: Irq) {
     // If the interrupt came from the Slave (interrupts 40-47), we thank the Slave
     if irq.is_from_slave_pic() {
@@ -79,8 +82,9 @@ pub fn send_end_of_interrupt(irq: Irq) {
     }
 }
 
-#[derive(Clone, Copy)]
+/// IRQ IDs
 #[repr(u8)]
+#[derive(Clone, Copy)]
 pub enum Irq {
     Keyboard = 1,
 }
