@@ -90,6 +90,7 @@ uninstall-deps:
 clean: docker-clean
 	rm -rf $(BUILD_DIR)
 	cargo clean
+	rm -rf target
 
 # Cold restart: wipe persistent caches (named volumes) then do a fresh ISO build
 .PHONY: re
