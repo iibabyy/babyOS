@@ -9,19 +9,17 @@ use crate::vga::{
 
 lazy_static! {
     pub static ref GLOBAL_WRITER: Mutex<Writer> = {
-        let buffer = unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) };
 
-        // sets all bytes in the buffer to 0
-        buffer.chars.iter_mut().for_each(|tab|
-            tab.fill(Volatile::new(ScreenChar::default()))
-        );
-
-        Mutex::new(Writer {
+        let mut writer = Writer {
             column_position: 0,
             row_position: 0,
             color_code: ColorCode::default(),
-            buffer
-        })
+            buffer: unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) },
+        };
+
+		writer.clear();
+
+		Mutex::new(writer)
     };
 }
 
@@ -110,6 +108,16 @@ impl Writer {
     fn move_cursor_to_current_pos(&mut self) {
         unsafe { vga::terminal_set_cursor(self.column_position, self.row_position) };
     }
+
+	pub fn clear(&mut self) {
+		self.buffer.chars.iter_mut().for_each(|tab|
+            tab.fill(Volatile::new(ScreenChar::default()))
+        );
+
+		self.column_position = 0;
+		self.row_position = 0;
+		self.move_cursor_to_current_pos();
+	}
 }
 
 // Key handlers

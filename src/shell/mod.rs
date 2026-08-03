@@ -1,6 +1,6 @@
 use core::{arch::asm, str};
 
-use crate::{dump_kernel_stack, idt, println, shared::outb, vga::VGA_BUFFER_WIDTH};
+use crate::{GLOBAL_WRITER, dump_kernel_stack, idt, println, shared::outb, vga::VGA_BUFFER_WIDTH};
 
 static mut COMMAND_BUFFER: [u8; VGA_BUFFER_WIDTH] = [0; VGA_BUFFER_WIDTH];
 static mut COMMAND_LENGTH: usize = 0;
@@ -28,6 +28,8 @@ pub fn shell_loop() -> ! {
                     println!("Rebooting...");
                     outb(0x64, 0xFE); // magic trick :)
                 }
+
+				"clear" => GLOBAL_WRITER.lock().clear(),
 
                 str if COMMAND_LENGTH > 0 => println!("Unknown command: {str}"),
                 _ => {}
