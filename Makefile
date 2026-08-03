@@ -27,12 +27,16 @@ build-iso: $(ISO)
 # Stop and remove the dev container (volumes are preserved)
 .PHONY: down
 down:
-	docker compose down
+	docker compose down 2>/dev/null || true
 
-# Wipe persistent caches (toolchain + cargo target). Forces a cold rebuild.
+# Wipe persistent caches (toolchain + cargo target) and docker compose cache. Forces a cold rebuild.
 .PHONY: docker-clean
 docker-clean:
-	docker compose down -v
+	docker compose down -v --remove-orphans --rmi local
+	podman image prune --build-cache -f
+	docker builder prune -f
+	podman image prune -f
+	docker image prune -f
 
 # Compiles the kernel binary using Cargo if any source files or build tools change
 $(KERNEL): $(KERNEL_DEPS)
@@ -69,7 +73,7 @@ test:
 	mkdir -p $(BUILD_DIR)
 	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.profile.test == true and .target.kind[] == "bin") | .executable') run-test
 debug: iso
-	$(QEMU) $(QEMU_FLAGS) -s -S -no-reboot -d int
+	$(QEMU) $(QEMU_FLAGS) -s -S -d int
 
 # Installs required build dependencies via the provided shell script
 .PHONY: deps

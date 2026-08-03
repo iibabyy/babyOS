@@ -16,6 +16,8 @@ const GDT_ADDRESS: *mut GdtEntry = GDT_BASE as *mut GdtEntry;
 // we place the pointer at the end of the gdt array
 const GDT_PTR_ADDRESS: *mut GdtPointer = (GDT_BASE + GDT_SIZE) as *mut GdtPointer;
 
+/// Inits the GDT table
+#[expect(static_mut_refs)]
 pub fn init_gdt() {
     let gdt = unsafe { core::slice::from_raw_parts_mut(GDT_ADDRESS, GDT_LEN) };
 
@@ -39,7 +41,9 @@ pub fn init_gdt() {
     unsafe { load_gdt(GDT_PTR_ADDRESS, kcode_offset, kdata_offset, kstack_offset) };
 }
 
-// SAFETY: ptr must point to a valid GdtPointer, and other args must be correct
+/// Tells the CPU to load a GDT pointer
+/// 
+/// SAFETY: ptr must point to a valid GdtPointer, and other args must be correct
 unsafe fn load_gdt(
     ptr: *const GdtPointer,
 
@@ -47,7 +51,7 @@ unsafe fn load_gdt(
     kcode_offset: u32,
     kdata_offset: u16,
     kstack_offset: u16,
-) {
+ ) {
     unsafe {
         asm!(
             // Load the GDT pointer
@@ -90,6 +94,7 @@ enum MemoryType {
     Data,
 }
 
+/// Creates a GDT entry for kernel code/data 
 fn kernel_gdt(mem_type: MemoryType) -> GdtEntry {
     let access_flags = GtdEntryAccessFlags::new()
         .with_is_present(true)

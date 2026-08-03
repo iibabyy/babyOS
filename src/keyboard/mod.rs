@@ -12,6 +12,7 @@ static mut CAPS_LOCK_ON: bool = false;
 static mut IS_EXTENDED: bool = false;
 
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
+	// read the last pressed/released key
     let scancode = read_scancode();
 
     // if scancode < 0x80, a key was pressed down
@@ -55,6 +56,7 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Inte
     // 0xE0 means that the next byte is an extended key (e.g. arrow keys, etc...)
     set_next_scancode_extended(scancode == 0xE0);
 
+	// telling the PIC we finished to handle this keyboard interrupt
     send_end_of_interrupt(Irq::Keyboard);
 }
 
