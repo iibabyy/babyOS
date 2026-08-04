@@ -1,2 +1,4 @@
 [toolchain]
-channel="nightly"
+channel="nightly-2026-08-04"
+components = ["rustfmt", "clippy", "rust-src"] # We should add "miri" after implementing unit tests
+profile = "minimal"

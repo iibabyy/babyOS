@@ -2,8 +2,8 @@ ARG BUILD_PLATFORM=linux/amd64
 FROM --platform=${BUILD_PLATFORM} rust:alpine
 
 WORKDIR /workspace
-
-RUN rustup toolchain install nightly && rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-musl
+COPY rust-toolchain.toml .
+RUN rustup toolchain install
 
 RUN apk update && apk add --no-cache \
     make \
