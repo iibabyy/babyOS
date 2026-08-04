@@ -1,25 +1,25 @@
 use crate::vga::{
-    ColorCode, GLOBAL_WRITER, ScreenChar, VGA_BUFFER_ADDRESS, VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH,
+    ColorCode, GLOBAL_VGA_SCREEN, ScreenChar, VGA_BUFFER_ADDRESS, VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH,
 };
 
-static mut SCREENS: [VirtualScreen; 4] = [VirtualScreen::empty(); 4];
+static mut SCREENS: [VirtualVgaScreen; 4] = [VirtualVgaScreen::empty(); 4];
 static mut ACTIVE_SCREEN_INDEX: usize = 0;
 
 type VirtualBuffer = [[ScreenChar; VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT];
 
-/// Virtual VGA screen buffer used for tab switching
+/// Virtual VGA screen used for tab switching
 /// 
-/// It saves [Writer][crate::vga::writer::Writer] infos
+/// It saves [VgaScreen][crate::vga::VgaScreen] infos
 #[derive(Clone, Copy)]
-pub struct VirtualScreen {
-    pub buffer: VirtualBuffer,
+pub struct VirtualVgaScreen {
     pub column_position: usize,
     pub row_position: usize,
     pub color_code: ColorCode,
+    pub buffer: VirtualBuffer,
 }
 
-impl VirtualScreen {
-    /// Creates a [VirtualScreen] with default zeroed contents
+impl VirtualVgaScreen {
+    /// Creates a [VirtualVgaScreen] with default zeroed contents
     pub const fn empty() -> Self {
 		let default_char = ScreenChar::new(0, ColorCode::white_on_black());
         Self {
@@ -72,7 +72,7 @@ pub fn switch_screen(
 
 /// Handles keyboard shortcut to switch screens
 pub fn handle_shortcut_switch_screen(new_index: usize) {
-    let mut writer = GLOBAL_WRITER.lock();
+    let mut writer = GLOBAL_VGA_SCREEN.lock();
 
     let res = switch_screen(
         new_index,
