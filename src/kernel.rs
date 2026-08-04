@@ -1,53 +1,21 @@
 #![no_main]
 #![no_std]
+#![warn(missing_docs)]
 
-// #![warn(missing_docs)]
-
-use core::arch::asm;
-
-use baby_lib::{Color, GLOBAL_WRITER, dump_kernel_stack, println};
+use baby_lib::{dump_kernel_stack, pmm_allocate_frame, pmm_deallocate_frame, println};
 
 #[unsafe(no_mangle)]
-pub extern "C" fn _entrypoint() -> ! {
-    baby_lib::init();
+pub extern "C" fn _entrypoint(magic_number: u32, multiboot_info_ptr: u32) -> ! {
+    baby_lib::init(magic_number, multiboot_info_ptr);
 
-    // test_my_stack();
-    // println!("42");
+	if let Some(frame_addr) = pmm_allocate_frame() {
+		let address = unsafe { &mut *(frame_addr as *const u8 as *mut u8) };
 
-    // unsafe {
-    //     asm!("int3");
-    // }
-
-    // println!("1");
-    // println!("2");
-    // println!("3");
-    // println!("");
-
-    // GLOBAL_WRITER
-    //     .lock()
-    //     .color_code
-    //     .set_foreground_color(Color::Cyan);
-    // GLOBAL_WRITER
-    //     .lock()
-    //     .color_code
-    //     .set_background_color(Color::White);
-    // println!("1");
-    // println!("2");
-    // println!("3");
-    // println!("");
-
-    // GLOBAL_WRITER
-    //     .lock()
-    //     .color_code
-    //     .set_foreground_color(Color::White);
-    // GLOBAL_WRITER
-    //     .lock()
-    //     .color_code
-    //     .set_background_color(Color::Black);
-    // println!("1");
-    // println!("2");
-    // println!("3");
-    // println!("");
+        *address = 12;
+		println!("Successfuly allocated memory {address:p} and writed {address} in it");
+		pmm_deallocate_frame(frame_addr);
+		println!("Successfuly deallocated memory");
+    }
 
     baby_lib::shell_loop();
 }

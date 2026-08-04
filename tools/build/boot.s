@@ -16,6 +16,13 @@ extern _entrypoint
 
 _start:
     mov esp, stack_top
+
+	; multiboot_info_ptr (c.f. _entrypoint implementation)
+	push ebx
+
+	; GRUB magic number
+	push eax
+
     call _entrypoint
 
 .hang:

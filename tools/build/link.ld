@@ -1,32 +1,19 @@
 ENTRY(_start)
+SECTIONS {
 
-SECTIONS
-{
     . = 0x00100000;
 
-    .multiboot :
-    {
-        KEEP(*(.multiboot))
-    }
+    kernel_start = .;
 
-    .text :
-    {
-        *(.text*)
-    }
+    .multiboot : { KEEP(*(.multiboot)) }
 
-    .rodata :
-    {
-        *(.rodata*)
-    }
+    .text : { *(.text*) }
 
-    .data :
-    {
-        *(.data*)
-    }
+    .rodata : { *(.rodata*) }
 
-    .bss :
-    {
-        *(COMMON)
-        *(.bss*)
-    }
+    .data : { *(.data*) }
+
+    .bss : { *(COMMON) *(.bss*) }
+
+    kernel_end = .;
 }

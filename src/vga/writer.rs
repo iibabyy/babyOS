@@ -110,9 +110,9 @@ impl Writer {
     }
 
 	pub fn clear(&mut self) {
-		self.buffer.chars.iter_mut().for_each(|tab|
-            tab.fill(Volatile::new(ScreenChar::default()))
-        );
+		for row in self.buffer.chars.iter_mut() {
+            row.fill(Volatile::new(ScreenChar::default()));
+		}
 
 		self.column_position = 0;
 		self.row_position = 0;
