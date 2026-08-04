@@ -11,6 +11,9 @@ static mut RSHIFT_PRESSED: bool = false;
 static mut CAPS_LOCK_ON: bool = false;
 static mut IS_EXTENDED: bool = false;
 
+/// Handles keyboard interrupts
+/// 
+/// Note: this reads the scancode from port and appends printable characters to the command buffer
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
 	// read the last pressed/released key
     let scancode = read_scancode();
@@ -60,6 +63,7 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Inte
     send_end_of_interrupt(Irq::Keyboard);
 }
 
+/// Reads the last scancode from the keyboard data port
 pub fn read_scancode() -> u8 {
     const KEYBOARD_DATA_PORT: u16 = 0x60;
     unsafe { inb(KEYBOARD_DATA_PORT) }
@@ -106,34 +110,42 @@ const SCANCODE_TO_SHIFTED_CHAR: [char; 58] = [
     '\0', '*', '\0', ' ',
 ];
 
+/// Returns true if the Left Shift key is pressed
 pub fn is_left_shift_pressed() -> bool {
     unsafe { LSHIFT_PRESSED }
 }
 
+/// Sets the Left Shift key pressed state to `new`
 pub fn set_left_shift_pressed(new: bool) {
     unsafe { LSHIFT_PRESSED = new }
 }
 
+/// Returns true if the Right Shift key is pressed
 pub fn is_right_shift_pressed() -> bool {
     unsafe { RSHIFT_PRESSED }
 }
 
+/// Sets the Right Shift key pressed state to `new`
 pub fn set_right_shift_pressed(new: bool) {
     unsafe { RSHIFT_PRESSED = new }
 }
 
+/// Returns true if the next scancode byte represents an extended key
 pub fn next_scancode_extended() -> bool {
     unsafe { IS_EXTENDED }
 }
 
+/// Sets the extended key scancode state to `new`
 pub fn set_next_scancode_extended(new: bool) {
     unsafe { IS_EXTENDED = new }
 }
 
+/// Returns true if Caps Lock is enabled
 pub fn is_caps_lock_on() -> bool {
     unsafe { CAPS_LOCK_ON }
 }
 
+/// Toggles the state of Caps Lock
 pub fn toggle_caps_lock() {
     unsafe { CAPS_LOCK_ON = !CAPS_LOCK_ON }
 }

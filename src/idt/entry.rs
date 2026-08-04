@@ -2,16 +2,18 @@ use modular_bitfield::prelude::*;
 
 use crate::shared::PrivilegeRing;
 
+/// An entry in the Interrupt Descriptor Table (IDT)
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct IdtEntry(RawIdtEntry);
 
 impl IdtEntry {
+    /// Creates an [IdtEntry] with every bit set to zero
     pub const fn zeroed() -> Self {
         Self(RawIdtEntry::new())
     }
 
-    /// Sets the handler function and the required options.
+    /// Sets the handler function and options for the entry
     pub fn set_handler_fn(&mut self, handler_address: u32, code_segment_offset: u16) {
         let options = IdtEntryOptions::new()
             .with_is_present(true)
@@ -27,6 +29,7 @@ impl IdtEntry {
     }
 }
 
+/// Raw bit representation of an IDT entry
 #[bitfield(bytes = 8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct RawIdtEntry {
@@ -45,6 +48,7 @@ pub struct RawIdtEntry {
     pub offset_high_bits: u16,
 }
 
+/// Options and configuration for an [IdtEntry]
 #[bitfield(bits = 8)]
 #[derive(Specifier, Clone, Copy, PartialEq, Eq)]
 pub struct IdtEntryOptions {
@@ -61,6 +65,7 @@ pub struct IdtEntryOptions {
     pub is_present: bool,
 }
 
+/// Supported IDT gate types
 #[derive(Specifier, Clone, Copy, PartialEq, Eq)]
 #[bits = 4]
 pub enum IdtGateType {
@@ -71,6 +76,7 @@ pub enum IdtGateType {
                            // TrapGate32 = 0xF,
 }
 
+/// A pointer descriptor to load IDT into the CPU
 #[repr(C, packed)]
 pub struct IdtPointer {
     pub limit: u16,

@@ -69,7 +69,7 @@ pub enum Interrupt {
 
 /// Enables CPU hardware interrupts (e.g. keyboard keys)
 /// 
-/// Safety: IDT must be initialized
+/// SAFETY: IDT must be initialized
 pub unsafe fn enable_hardware_interrupts() {
     unsafe {
         core::arch::asm!("sti");

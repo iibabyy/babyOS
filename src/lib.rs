@@ -1,6 +1,9 @@
+//! A minimal 32-bit x86 kernel library
+
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
+#![warn(missing_docs)]
 
 use core::panic::PanicInfo;
 
@@ -24,7 +27,7 @@ pub use vga::{_print, Color, GLOBAL_WRITER};
 
 use crate::memory::{GRUB_MULTIBOOT_MAGIC, MultibootInfo, init_physical_memory};
 
-
+/// Initializes the kernel systems
 pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
 	// validates magic_number
 	assert_eq!(magic_number, GRUB_MULTIBOOT_MAGIC, "invalid magic number");
@@ -34,20 +37,25 @@ pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
 
 	unsafe {
 		// SAFETY: GDT is initialized
-        idt::init_idt();
+		idt::init_idt();
 
 		// enables CPU hardware interrupts (e.g. keyboard keys)
 		// SAFETY: IDT is initialized
-        idt::enable_hardware_interrupts();
-    }
+		idt::enable_hardware_interrupts();
+	}
 
 	let multiboot_info_ptr = unsafe { &*(multiboot_info_ptr as *const MultibootInfo) };
 	init_physical_memory(multiboot_info_ptr);
 }
 
+/// Prints the panic info and enters an infinite loop
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
     println!("{info}");
 
-    loop {}
+    loop {
+		idt::disable_hardware_interrupts();
+		unsafe { core::arch::asm!("hlt"); }
+	}
 }
+

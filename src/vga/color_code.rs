@@ -1,6 +1,7 @@
+/// VGA colors
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-#[allow(dead_code)]
+#[expect(missing_docs)]
 pub enum Color {
     Black = 0,
     Blue = 1,
@@ -20,6 +21,7 @@ pub enum Color {
     White = 15,
 }
 
+/// VGA color code containing foreground and background colors
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct ColorCode(u8);
@@ -31,7 +33,7 @@ impl ColorCode {
     }
 
     #[must_use]
-    pub const fn default() -> ColorCode {
+    pub const fn white_on_black() -> ColorCode {
         ColorCode::new(Color::White, Color::Black)
     }
 
@@ -43,3 +45,4 @@ impl ColorCode {
         self.0 = (self.0 & 0xF0) | (foreground as u8);
     }
 }
+

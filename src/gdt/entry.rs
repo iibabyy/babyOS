@@ -130,8 +130,3 @@ pub struct GdtEntryFlags {
     pub granularity: bool,
 }
 
-#[repr(C, packed)]
-pub struct GdtPointer {
-    pub limit: u16,
-    pub base: u32,
-}

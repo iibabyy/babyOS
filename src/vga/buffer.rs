@@ -28,14 +28,7 @@ pub struct ScreenChar {
 }
 
 impl ScreenChar {
-    pub fn new(byte: u8, color_code: ColorCode) -> Self {
+    pub const fn new(byte: u8, color_code: ColorCode) -> Self {
         Self { byte, color_code }
-    }
-
-    pub const fn default() -> Self {
-        Self {
-            byte: 0,
-            color_code: ColorCode::default(),
-        }
     }
 }

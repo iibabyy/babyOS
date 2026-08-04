@@ -2,6 +2,7 @@ use core::arch::asm;
 
 use modular_bitfield::Specifier;
 
+/// x86 privilege ring level
 #[derive(Specifier, Clone, Copy, PartialEq, Eq)]
 #[bits = 2]
 pub enum PrivilegeRing {
@@ -9,7 +10,7 @@ pub enum PrivilegeRing {
     UserSpace = 3,
 }
 
-/// Write 8 bits to port
+/// Write 16 bits to `port`
 #[inline]
 #[expect(unsafe_op_in_unsafe_fn)]
 pub unsafe fn outb(port: u16, val: u8) {
@@ -21,7 +22,7 @@ pub unsafe fn outb(port: u16, val: u8) {
     );
 }
 
-/// Read 8 bits from port
+/// Read 8 bits from `port`
 #[inline]
 #[expect(unsafe_op_in_unsafe_fn)]
 pub unsafe fn inb(port: u16) -> u8 {
@@ -34,3 +35,4 @@ pub unsafe fn inb(port: u16) -> u8 {
     );
     ret
 }
+

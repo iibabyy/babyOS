@@ -6,6 +6,9 @@ static mut COMMAND_BUFFER: [u8; VGA_BUFFER_WIDTH] = [0; VGA_BUFFER_WIDTH];
 static mut COMMAND_LENGTH: usize = 0;
 static mut COMMAND_READY: bool = false;
 
+/// Runs an interactive command interpreter loop
+/// 
+/// available commands are stack, halt, reboot, and clear
 pub fn shell_loop() -> ! {
     loop {
         unsafe {
@@ -40,7 +43,11 @@ pub fn shell_loop() -> ! {
     }
 }
 
+/// Adds a character to [COMMAND_BUFFER]
+/// 
+/// handles backspaces and sets [COMMAND_READY] to `true` on a newline
 pub fn add_char_to_command_buffer(c: u8) {
+
     // backspace
     unsafe {
         match c {

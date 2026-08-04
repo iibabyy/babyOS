@@ -2,7 +2,7 @@ use core::arch::asm;
 
 use crate::println;
 
-// dump the stack of the caller function
+/// Dumps the stack frames of the caller function
 pub fn dump_kernel_stack() {
     let mut ebp: u32;
 

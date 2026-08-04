@@ -1,7 +1,7 @@
 use core::arch::asm;
 
 use crate::{
-    gdt::entry::{GdtEntry, GdtEntryFlags, GdtPointer, GtdEntryAccessFlags},
+    gdt::entry::{GdtEntry, GdtEntryFlags, GtdEntryAccessFlags},
     shared::PrivilegeRing,
 };
 
@@ -16,8 +16,14 @@ const GDT_ADDRESS: *mut GdtEntry = GDT_BASE as *mut GdtEntry;
 // we place the pointer at the end of the gdt array
 const GDT_PTR_ADDRESS: *mut GdtPointer = (GDT_BASE + GDT_SIZE) as *mut GdtPointer;
 
-/// Inits the GDT table
-#[expect(static_mut_refs)]
+/// Pointer descriptor to load GDT into the CPU
+#[repr(C, packed)]
+pub struct GdtPointer {
+    pub limit: u16,
+    pub base: u32,
+}
+
+/// Initialize the GDT
 pub fn init_gdt() {
     let gdt = unsafe { core::slice::from_raw_parts_mut(GDT_ADDRESS, GDT_LEN) };
 
@@ -43,7 +49,7 @@ pub fn init_gdt() {
 
 /// Tells the CPU to load a GDT pointer
 /// 
-/// SAFETY: ptr must point to a valid GdtPointer, and other args must be correct
+/// SAFETY: `ptr` must point to a valid [GdtPointer], and other arguments must be correct offsets
 unsafe fn load_gdt(
     ptr: *const GdtPointer,
 

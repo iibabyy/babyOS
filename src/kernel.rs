@@ -1,9 +1,11 @@
+//! A minimal 32-bit x86 kernel
+
 #![no_main]
 #![no_std]
-#![warn(missing_docs)]
 
 use baby_lib::{dump_kernel_stack, pmm_allocate_frame, pmm_deallocate_frame, println};
 
+/// First rust function called by the link.ld file
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint(magic_number: u32, multiboot_info_ptr: u32) -> ! {
     baby_lib::init(magic_number, multiboot_info_ptr);

@@ -1,3 +1,4 @@
+/// Prints to the standard output.
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => {{
@@ -6,6 +7,7 @@ macro_rules! print {
     }};
 }
 
+/// Prints to the standard output, with a newline.
 #[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n"));

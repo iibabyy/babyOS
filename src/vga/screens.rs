@@ -7,6 +7,9 @@ static mut ACTIVE_SCREEN_INDEX: usize = 0;
 
 type VirtualBuffer = [[ScreenChar; VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT];
 
+/// Virtual VGA screen buffer used for tab switching
+/// 
+/// It saves [Writer][crate::vga::writer::Writer] infos
 #[derive(Clone, Copy)]
 pub struct VirtualScreen {
     pub buffer: VirtualBuffer,
@@ -16,16 +19,21 @@ pub struct VirtualScreen {
 }
 
 impl VirtualScreen {
+    /// Creates a [VirtualScreen] with default zeroed contents
     pub const fn empty() -> Self {
+		let default_char = ScreenChar::new(0, ColorCode::white_on_black());
         Self {
-            buffer: [[ScreenChar::default(); VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT],
+            buffer: [[default_char; VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT],
             column_position: 0,
             row_position: 0,
-            color_code: ColorCode::default(),
+            color_code: ColorCode::white_on_black(),
         }
     }
 }
 
+/// Switches the active screen to `new_index` and saves the current cursor/color states
+/// 
+/// Returns the saved cursor/color states of the new screen, or None if parameters are invalid
 #[expect(static_mut_refs)]
 pub fn switch_screen(
     new_index: usize,
@@ -62,6 +70,7 @@ pub fn switch_screen(
     }
 }
 
+/// Handles keyboard shortcut to switch screens
 pub fn handle_shortcut_switch_screen(new_index: usize) {
     let mut writer = GLOBAL_WRITER.lock();
 

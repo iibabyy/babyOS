@@ -8,12 +8,13 @@ use crate::vga::{
 };
 
 lazy_static! {
+    /// Global [Writer] protected by a [Mutex] to write to the VGA screen
     pub static ref GLOBAL_WRITER: Mutex<Writer> = {
 
         let mut writer = Writer {
             column_position: 0,
             row_position: 0,
-            color_code: ColorCode::default(),
+            color_code: ColorCode::white_on_black(),
             buffer: unsafe { &mut *(VGA_BUFFER_ADDRESS as *mut Buffer) },
         };
 
@@ -23,10 +24,15 @@ lazy_static! {
     };
 }
 
+/// Helper to print characters to the VGA buffer
 pub struct Writer {
     pub column_position: usize,
     pub row_position: usize,
+
+    /// foreground and background color code
     pub color_code: ColorCode,
+
+    /// VGA screen buffer
     pub buffer: &'static mut Buffer,
 }
 
@@ -106,12 +112,14 @@ impl Writer {
     }
 
     fn move_cursor_to_current_pos(&mut self) {
+		// SAFETY: args are not (should not be 👀) out of bounds
         unsafe { vga::terminal_set_cursor(self.column_position, self.row_position) };
     }
 
+	/// Fills the VGA screen buffer with null bytes
 	pub fn clear(&mut self) {
 		for row in self.buffer.chars.iter_mut() {
-            row.fill(Volatile::new(ScreenChar::default()));
+            row.fill(Volatile::new(ScreenChar::new(0x0, self.color_code)));
 		}
 
 		self.column_position = 0;
@@ -132,6 +140,7 @@ impl Writer {
         }
     }
 
+    /// Deletes the character behind the cursor
     pub fn backspace(&mut self) {
         if self.column_position == 0 {
             return;
@@ -144,6 +153,7 @@ impl Writer {
         self.move_cursor_to_current_pos()
     }
 
+    /// Moves the cursor one character to the right
     pub fn handle_right_arrow(&mut self) {
         if self.column_position >= VGA_BUFFER_WIDTH - 1 {
             return;
@@ -158,6 +168,7 @@ impl Writer {
         self.move_cursor_to_current_pos()
     }
 
+    /// Moves the cursor one character to the left
     pub fn handle_left_arrow(&mut self) {
         if self.column_position == 0 {
             return;

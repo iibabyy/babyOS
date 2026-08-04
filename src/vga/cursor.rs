@@ -1,11 +1,10 @@
 use crate::shared::outb;
 use crate::vga::{VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH};
 
-/// # Safety
-/// The caller must ensure that `x` and `y` are within the bounds of the VGA buffer.
+/// SAFETY: `x` and `y` must be within the bounds of the VGA buffer
 pub unsafe fn terminal_set_cursor(x: usize, y: usize) {
     if x >= VGA_BUFFER_WIDTH || y >= VGA_BUFFER_HEIGHT {
-        return;
+        return
     }
 
     let pos: u16 = (y * VGA_BUFFER_WIDTH + x) as u16;
