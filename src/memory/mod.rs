@@ -1,17 +1,17 @@
+mod multiboot;
 mod pages;
+mod pmm;
 
-use crate::memory::multiboot::MemoryMapEntry;
-pub use crate::memory::multiboot::{
+use self::multiboot::MemoryMapEntry;
+pub use self::multiboot::{
 	GRUB_MULTIBOOT_MAGIC,
 	MultibootInfo,
 };
-use crate::memory::pmm::GLOBAL_ALLOCATOR;
-pub use crate::memory::pmm::{
+use self::pmm::GLOBAL_ALLOCATOR;
+pub use self::pmm::{
 	pmm_allocate_frame,
 	pmm_deallocate_frame,
 };
-
-use crate::memory::multiboot::MemoryMapEntry;
 
 // kernel start and end addresses from link.ld (tools/build/link.ld)
 unsafe extern "C" {

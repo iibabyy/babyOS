@@ -1,17 +1,13 @@
+pub mod entry;
+
 use core::arch::asm;
 
-use crate::idt::entry::{
+use self::entry::{
 	IdtEntry,
 	IdtPointer,
 };
 use crate::keyboard::keyboard_interrupt_handler;
 use crate::println;
-
-pub mod entry;
-use entry::{
-	IdtEntry,
-	IdtPointer,
-};
 
 static mut IDT: [IdtEntry; 256] = [IdtEntry::zeroed(); 256];
 static mut IDT_PTR: IdtPointer = IdtPointer {

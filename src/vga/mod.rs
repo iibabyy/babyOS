@@ -1,47 +1,29 @@
 #![expect(unused_imports)]
 
 mod buffer;
+mod color_code;
+mod cursor;
+mod screens;
+
 use core::fmt::Write;
 
-pub use buffer::{
-	Buffer,
-	ScreenChar,
-	VGA_BUFFER_ADDRESS,
-	VGA_BUFFER_HEIGHT,
-	VGA_BUFFER_WIDTH,
-};
-
-mod color_code;
-pub use color_code::{
-	Color,
-	ColorCode,
-};
-
-mod cursor;
-pub use cursor::terminal_set_cursor;
-
-mod screens;
 use lazy_static::lazy_static;
-pub use screens::{
-	handle_shortcut_switch_screen,
-	switch_screen,
-};
 use spin::Mutex;
 use volatile::Volatile;
 
-pub use crate::vga::buffer::{
+pub use self::buffer::{
 	Buffer,
 	ScreenChar,
 	VGA_BUFFER_ADDRESS,
 	VGA_BUFFER_HEIGHT,
 	VGA_BUFFER_WIDTH,
 };
-pub use crate::vga::color_code::{
+pub use self::color_code::{
 	Color,
 	ColorCode,
 };
-pub use crate::vga::cursor::terminal_set_cursor;
-pub use crate::vga::screens::{
+pub use self::cursor::terminal_set_cursor;
+pub use self::screens::{
 	handle_shortcut_switch_screen,
 	switch_screen,
 };
@@ -159,7 +141,7 @@ impl VgaScreen {
 
 	fn move_cursor_to_current_pos(&mut self) {
 		// SAFETY: args are not (should not be 👀) out of bounds
-		unsafe { vga::terminal_set_cursor(self.column_position, self.row_position) };
+		unsafe { terminal_set_cursor(self.column_position, self.row_position) };
 	}
 
 	/// Fills the VGA screen buffer with null bytes

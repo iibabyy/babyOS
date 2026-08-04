@@ -18,16 +18,16 @@ mod vga;
 use core::arch::asm;
 use core::panic::PanicInfo;
 
-pub use crate::gdt::dump::dump_kernel_stack;
-pub use crate::memory::{
+pub use self::gdt::dump::dump_kernel_stack;
+pub use self::memory::{
 	GRUB_MULTIBOOT_MAGIC,
 	MultibootInfo,
 	init_physical_memory,
 	pmm_allocate_frame,
 	pmm_deallocate_frame,
 };
-pub use crate::shell::shell_loop;
-pub use crate::vga::{
+pub use self::shell::shell_loop;
+pub use self::vga::{
 	_print,
 	Color,
 	GLOBAL_VGA_SCREEN,

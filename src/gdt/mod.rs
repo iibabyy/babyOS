@@ -1,14 +1,14 @@
+pub mod dump;
+pub mod entry;
+
 use core::arch::asm;
 
-use crate::gdt::entry::{
+use self::entry::{
 	GdtEntry,
 	GdtEntryFlags,
 	GtdEntryAccessFlags,
 };
 use crate::shared::PrivilegeRing;
-
-pub mod dump;
-pub mod entry;
 
 const GDT_BASE: usize = 0x00000800;
 const GDT_LEN: usize = 7;
