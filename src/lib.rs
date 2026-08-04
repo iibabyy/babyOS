@@ -5,35 +5,41 @@
 #![feature(abi_x86_interrupt)]
 #![warn(missing_docs)]
 
-use core::panic::PanicInfo;
-
+mod gdt;
 mod idt;
 mod keyboard;
 mod macros;
+mod memory;
 mod pic;
 mod shared;
-
-mod memory;
-pub use memory::{pmm_allocate_frame, pmm_deallocate_frame};
-
 mod shell;
-pub use shell::shell_loop;
-
-mod gdt;
-pub use gdt::dump::dump_kernel_stack;
-
 mod vga;
-pub use vga::{_print, Color, GLOBAL_WRITER};
 
-use crate::memory::{GRUB_MULTIBOOT_MAGIC, MultibootInfo, init_physical_memory};
+use core::arch::asm;
+use core::panic::PanicInfo;
+
+pub use crate::gdt::dump::dump_kernel_stack;
+pub use crate::memory::{
+	GRUB_MULTIBOOT_MAGIC,
+	MultibootInfo,
+	init_physical_memory,
+	pmm_allocate_frame,
+	pmm_deallocate_frame,
+};
+pub use crate::shell::shell_loop;
+pub use crate::vga::{
+	_print,
+	Color,
+	GLOBAL_VGA_SCREEN,
+};
 
 /// Initializes the kernel systems
 pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
 	// validates magic_number
 	assert_eq!(magic_number, GRUB_MULTIBOOT_MAGIC, "invalid magic number");
 
-    gdt::init_gdt();
-    pic::init_pics();
+	gdt::init_gdt();
+	pic::init_pics();
 
 	unsafe {
 		// SAFETY: GDT is initialized
@@ -51,11 +57,12 @@ pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
 /// Prints the panic info and enters an infinite loop
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
-    println!("{info}");
+	println!("{info}");
 
-    loop {
+	loop {
 		idt::disable_hardware_interrupts();
-		unsafe { core::arch::asm!("hlt"); }
+		unsafe {
+			asm!("hlt");
+		}
 	}
 }
-

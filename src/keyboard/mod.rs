@@ -1,10 +1,11 @@
-use crate::{
-    idt::InterruptStackFrame,
-    pic::{Irq, send_end_of_interrupt},
-    print,
-    shared::inb,
-    shell::add_char_to_command_buffer,
+use crate::idt::InterruptStackFrame;
+use crate::pic::{
+	Irq,
+	send_end_of_interrupt,
 };
+use crate::print;
+use crate::shared::inb;
+use crate::shell::add_char_to_command_buffer;
 
 static mut LSHIFT_PRESSED: bool = false;
 static mut RSHIFT_PRESSED: bool = false;
@@ -12,140 +13,141 @@ static mut CAPS_LOCK_ON: bool = false;
 static mut IS_EXTENDED: bool = false;
 
 /// Handles keyboard interrupts
-/// 
-/// Note: this reads the scancode from port and appends printable characters to the command buffer
+///
+/// Note: this reads the scancode from port and appends printable characters to
+/// the command buffer
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
 	// read the last pressed/released key
-    let scancode = read_scancode();
+	let scancode = read_scancode();
 
-    // if scancode < 0x80, a key was pressed down
-    // if scancode > 0x80, a key was released
-    match scancode {
-        // left shift
-        0x2A => set_left_shift_pressed(true),
-        0xAA => set_left_shift_pressed(false), // 0x2A + 0x80 = 0xAA (Release)
+	// if scancode < 0x80, a key was pressed down
+	// if scancode > 0x80, a key was released
+	match scancode {
+		// left shift
+		0x2a => set_left_shift_pressed(true),
+		0xaa => set_left_shift_pressed(false), // 0x2A + 0x80 = 0xAA (Release)
 
-        // right shift
-        0x36 => set_right_shift_pressed(true),
-        0xB6 => set_right_shift_pressed(false),
+		// right shift
+		0x36 => set_right_shift_pressed(true),
+		0xb6 => set_right_shift_pressed(false),
 
-        // caps lock
-        0x3A => toggle_caps_lock(),
+		// caps lock
+		0x3a => toggle_caps_lock(),
 
-        // Function Keys F1 - F4
-        0x3B => crate::vga::handle_shortcut_switch_screen(0), // F1
-        0x3C => crate::vga::handle_shortcut_switch_screen(1), // F2
-        0x3D => crate::vga::handle_shortcut_switch_screen(2), // F3
-        0x3E => crate::vga::handle_shortcut_switch_screen(3), // F4
+		// Function Keys F1 - F4
+		0x3b => crate::vga::handle_shortcut_switch_screen(0), // F1
+		0x3c => crate::vga::handle_shortcut_switch_screen(1), // F2
+		0x3d => crate::vga::handle_shortcut_switch_screen(2), // F3
+		0x3e => crate::vga::handle_shortcut_switch_screen(3), // F4
 
-        _ if next_scancode_extended() => {
-            match scancode {
-                // 0x4B => vga::GLOBAL_VGA_SCREEN.lock().handle_left_arrow(),
-                // 0x4D => vga::GLOBAL_VGA_SCREEN.lock().handle_right_arrow(),
-                0x53 => { /* DELETE (not backspace) */ }
-                0x48 => { /* UP */ }
-                0x50 => { /* DOWN */ }
+		_ if next_scancode_extended() => {
+			match scancode {
+				// 0x4B => vga::GLOBAL_VGA_SCREEN.lock().handle_left_arrow(),
+				// 0x4D => vga::GLOBAL_VGA_SCREEN.lock().handle_right_arrow(),
+				0x53 => { /* DELETE (not backspace) */ }
+				0x48 => { /* UP */ }
+				0x50 => { /* DOWN */ }
 
-                _ => {} // Ignore other extended keys (like Right Ctrl)
-            }
-        }
+				_ => {} // Ignore other extended keys (like Right Ctrl)
+			}
+		}
 
-        // Printable keys
-        0x00..=0x39 => print_scancode(scancode),
+		// Printable keys
+		0x00..=0x39 => print_scancode(scancode),
 
-        _ => {}
-    }
+		_ => {}
+	}
 
-    // 0xE0 means that the next byte is an extended key (e.g. arrow keys, etc...)
-    set_next_scancode_extended(scancode == 0xE0);
+	// 0xE0 means that the next byte is an extended key (e.g. arrow keys, etc...)
+	set_next_scancode_extended(scancode == 0xe0);
 
 	// telling the PIC we finished to handle this keyboard interrupt
-    send_end_of_interrupt(Irq::Keyboard);
+	send_end_of_interrupt(Irq::Keyboard);
 }
 
 /// Reads the last scancode from the keyboard data port
 pub fn read_scancode() -> u8 {
-    const KEYBOARD_DATA_PORT: u16 = 0x60;
-    unsafe { inb(KEYBOARD_DATA_PORT) }
+	const KEYBOARD_DATA_PORT: u16 = 0x60;
+	unsafe { inb(KEYBOARD_DATA_PORT) }
 }
 
 fn print_scancode(scancode: u8) {
-    let shift_pressed = is_left_shift_pressed() || is_right_shift_pressed();
+	let shift_pressed = is_left_shift_pressed() || is_right_shift_pressed();
 
-    let mut c = if shift_pressed {
-        SCANCODE_TO_SHIFTED_CHAR[scancode as usize]
-    } else {
-        SCANCODE_TO_CHAR[scancode as usize]
-    };
+	let mut c = if shift_pressed {
+		SCANCODE_TO_SHIFTED_CHAR[scancode as usize]
+	} else {
+		SCANCODE_TO_CHAR[scancode as usize]
+	};
 
-    if is_caps_lock_on() && c.is_alphabetic() {
-        if c.is_ascii_lowercase() {
-            c = c.to_ascii_uppercase();
-        } else {
-            c = c.to_ascii_lowercase();
-        }
-    }
+	if is_caps_lock_on() && c.is_alphabetic() {
+		if c.is_ascii_lowercase() {
+			c = c.to_ascii_uppercase();
+		} else {
+			c = c.to_ascii_lowercase();
+		}
+	}
 
-    if c != '\0' {
-        print!("{c}");
-        add_char_to_command_buffer(c as u8);
-    }
+	if c != '\0' {
+		print!("{c}");
+		add_char_to_command_buffer(c as u8);
+	}
 }
 
 // Maps Scancodes 0x00 through 0x39 to ASCII characters
 const SCANCODE_TO_CHAR: [char; 58] = [
-    '\0', '\x1B', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
-    '\x08', // 0x00 - 0x0E
-    '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', // 0x0F - 0x1C
-    '\0', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', // 0x1D - 0x29
-    '\0', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '*', // 0x2A - 0x37
-    '\0', ' ', // 0x38 - 0x39
+	'\0', '\x1B', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
+	'\x08', // 0x00 - 0x0E
+	'\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', // 0x0F - 0x1C
+	'\0', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', // 0x1D - 0x29
+	'\0', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '*', // 0x2A - 0x37
+	'\0', ' ', // 0x38 - 0x39
 ];
 
 // Maps Scancodes 0x00 through 0x39 when SHIFT is held down
 const SCANCODE_TO_SHIFTED_CHAR: [char; 58] = [
-    '\0', '\x1B', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\x08', '\t', 'Q',
-    'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A', 'S', 'D', 'F', 'G',
-    'H', 'J', 'K', 'L', ':', '"', '~', '\0', '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',
-    '\0', '*', '\0', ' ',
+	'\0', '\x1B', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\x08', '\t', 'Q',
+	'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A', 'S', 'D', 'F', 'G',
+	'H', 'J', 'K', 'L', ':', '"', '~', '\0', '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',
+	'\0', '*', '\0', ' ',
 ];
 
 /// Returns true if the Left Shift key is pressed
 pub fn is_left_shift_pressed() -> bool {
-    unsafe { LSHIFT_PRESSED }
+	unsafe { LSHIFT_PRESSED }
 }
 
 /// Sets the Left Shift key pressed state to `new`
 pub fn set_left_shift_pressed(new: bool) {
-    unsafe { LSHIFT_PRESSED = new }
+	unsafe { LSHIFT_PRESSED = new }
 }
 
 /// Returns true if the Right Shift key is pressed
 pub fn is_right_shift_pressed() -> bool {
-    unsafe { RSHIFT_PRESSED }
+	unsafe { RSHIFT_PRESSED }
 }
 
 /// Sets the Right Shift key pressed state to `new`
 pub fn set_right_shift_pressed(new: bool) {
-    unsafe { RSHIFT_PRESSED = new }
+	unsafe { RSHIFT_PRESSED = new }
 }
 
 /// Returns true if the next scancode byte represents an extended key
 pub fn next_scancode_extended() -> bool {
-    unsafe { IS_EXTENDED }
+	unsafe { IS_EXTENDED }
 }
 
 /// Sets the extended key scancode state to `new`
 pub fn set_next_scancode_extended(new: bool) {
-    unsafe { IS_EXTENDED = new }
+	unsafe { IS_EXTENDED = new }
 }
 
 /// Returns true if Caps Lock is enabled
 pub fn is_caps_lock_on() -> bool {
-    unsafe { CAPS_LOCK_ON }
+	unsafe { CAPS_LOCK_ON }
 }
 
 /// Toggles the state of Caps Lock
 pub fn toggle_caps_lock() {
-    unsafe { CAPS_LOCK_ON = !CAPS_LOCK_ON }
+	unsafe { CAPS_LOCK_ON = !CAPS_LOCK_ON }
 }
