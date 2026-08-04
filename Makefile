@@ -16,30 +16,24 @@ BUILD_FLAGS      := -Zjson-target-spec
 .PHONY: all
 all: run
 
+# Boots the generated ISO image using QEMU
+.PHONY: run
+run: iso
+	$(QEMU) $(QEMU_FLAGS)
+
+debug: iso
+	$(QEMU) $(QEMU_FLAGS) -s -S -d int
+
 # Build the ISO using a one-shot Docker container
 .PHONY: iso
 iso:
 	docker compose run --build --rm dev
 
-# Internal native ISO build target (used inside the container via CMD)
+# Internal native ISO build target (used inside the container)
 .PHONY: build-iso
 build-iso: $(ISO)
 
-# Stop and remove the dev container (volumes are preserved)
-.PHONY: down
-down:
-	docker compose down 2>/dev/null || true
-
-# Wipe persistent caches (toolchain + cargo target) and docker compose cache. Forces a cold rebuild.
-.PHONY: docker-clean
-docker-clean:
-	docker compose down -v --remove-orphans --rmi local
-	podman image prune --build-cache -f
-	docker builder prune -f
-	podman image prune -f
-	docker image prune -f
-
-# Compiles the kernel binary using Cargo if any source files or build tools change
+# Compiles the kernel binary using Cargo
 $(KERNEL): $(KERNEL_DEPS)
 	mkdir -p $(BUILD_DIR)
 	cargo build $(BUILD_FLAGS)
@@ -53,11 +47,21 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 	grub-file --is-x86-multiboot $(ISO_DIR)/boot/babyOS
 	grub-mkrescue -o $(ISO) $(ISO_DIR)
 
-# Boots the generated ISO image using QEMU in curses mode (terminal display)
-.PHONY: run
-run: iso
-	$(QEMU) $(QEMU_FLAGS)
+# Stop and remove the dev container (volumes are preserved)
+.PHONY: down
+down:
+	docker compose down
 
+# Wipe persistent caches (toolchain + cargo target) and docker compose cache. Forces a cold rebuild.
+.PHONY: docker-clean
+docker-clean:
+	docker compose down -v --remove-orphans --rmi local
+	podman image prune --build-cache -f
+	docker builder prune -f
+	podman image prune -f
+	docker image prune -f
+
+# Tests (disabled for now)
 # # Boots the test kernel ISO headlessly, streaming COM1 to host stdio.
 # # Invoked by `test` via a KERNEL= override so the ISO is built from the
 # # cargo-test binary instead of the regular kernel.
@@ -71,24 +75,10 @@ run: iso
 # 	mkdir -p $(BUILD_DIR)
 # 	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.profile.test == true and .target.kind[] == "bin") | .executable') run-test
 
-debug: iso
-	$(QEMU) $(QEMU_FLAGS) -s -S -d int
-
-# Installs required build dependencies via the provided shell script
-.PHONY: deps
-deps:
-	tools/install_deps.sh
-
-# Uninstalls build dependencies via the provided shell script
-.PHONY: uninstall-deps
-uninstall-deps:
-	tools/uninstall_deps.sh
-
 # Cleans up the project: wipes Docker caches/volumes, the build directory, and cargo artifacts
 .PHONY: clean
 clean: docker-clean
 	rm -rf $(BUILD_DIR)
-	cargo clean
 	rm -rf target
 
 # Cold restart: wipe persistent caches (named volumes) then do a fresh ISO build
