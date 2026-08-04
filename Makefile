@@ -1,10 +1,11 @@
+BINARY_NAME		 ?= baby
 BUILD_DIR        ?= build
 TARGET_NAME      ?= x86-target
 CARGO_TARGET_DIR ?= target
 TARGET_DIR       ?= $(CARGO_TARGET_DIR)/$(TARGET_NAME)/debug
-KERNEL           ?= $(TARGET_DIR)/baby_os
+KERNEL           ?= $(TARGET_DIR)/$(BINARY_NAME)
 ISO_DIR          ?= $(BUILD_DIR)/isodir
-ISO              ?= $(BUILD_DIR)/baby_os.iso
+ISO              ?= $(BUILD_DIR)/$(BINARY_NAME).iso
 GRUBCFG          ?= tools/build/grub.cfg
 QEMU             ?= qemu-system-i386
 QEMU_FLAGS		 := -cdrom $(ISO) -m 512M

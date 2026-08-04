@@ -13,7 +13,7 @@ use kernel::{
 /// First rust function called by the link.ld file
 #[unsafe(no_mangle)]
 pub extern "C" fn _entrypoint(magic_number: u32, multiboot_info_ptr: u32) -> ! {
-	baby_lib::init(magic_number, multiboot_info_ptr);
+	kernel::init(magic_number, multiboot_info_ptr);
 
 	if let Some(frame_addr) = pmm_allocate_frame() {
 		let address = unsafe { &mut *(frame_addr as *const u8 as *mut u8) };
@@ -24,7 +24,7 @@ pub extern "C" fn _entrypoint(magic_number: u32, multiboot_info_ptr: u32) -> ! {
 		println!("Successfuly deallocated memory");
 	}
 
-	baby_lib::shell_loop();
+	kernel::shell_loop();
 }
 
 #[inline(never)]

@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "baby-os"
+name = "baby"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
