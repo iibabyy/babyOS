@@ -57,21 +57,19 @@ $(ISO): $(KERNEL) $(GRUBCFG)
 run: iso
 	$(QEMU) $(QEMU_FLAGS)
 
-# Boots the ISO in QEMU, pausing at startup (-S) and opening a GDB stub on port 1234 (-s)
-.PHONY: run-debug
+# # Boots the test kernel ISO headlessly, streaming COM1 to host stdio.
+# # Invoked by `test` via a KERNEL= override so the ISO is built from the
+# # cargo-test binary instead of the regular kernel.
+# .PHONY: run-test
+# run-test: $(ISO)
+# 	$(QEMU) $(QEMU_TEST_FLAGS)
 
-# Boots the test kernel ISO headlessly, streaming COM1 to host stdio.
-# Invoked by `test` via a KERNEL= override so the ISO is built from the
-# cargo-test binary instead of the regular kernel.
-.PHONY: run-test
-run-test: $(ISO)
-	$(QEMU) $(QEMU_TEST_FLAGS)
+# # Runs the test suite using Cargo
+# .PHONY: test
+# test:
+# 	mkdir -p $(BUILD_DIR)
+# 	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.profile.test == true and .target.kind[] == "bin") | .executable') run-test
 
-# Runs the test suite using Cargo
-.PHONY: test
-test:
-	mkdir -p $(BUILD_DIR)
-	$(MAKE) KERNEL=$(shell cargo test --no-run --message-format json | jq -r 'select(.profile.test == true and .target.kind[] == "bin") | .executable') run-test
 debug: iso
 	$(QEMU) $(QEMU_FLAGS) -s -S -d int
 
