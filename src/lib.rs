@@ -4,6 +4,8 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 #![warn(missing_docs)]
+#![allow(clippy::tabs_in_doc_comments)]
+#![allow(dead_code)]
 
 mod gdt;
 mod idt;
@@ -32,6 +34,12 @@ pub use self::vga::{
 	Color,
 	GLOBAL_VGA_SCREEN,
 };
+use crate::memory::{
+	enable_paging,
+	init_virtual_memory,
+};
+
+// TODO: add options to asm!() calls (for better compiler optimizations)
 
 /// Initializes the kernel systems
 pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
@@ -41,17 +49,22 @@ pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
 	gdt::init_gdt();
 	pic::init_pics();
 
-	unsafe {
-		// SAFETY: GDT is initialized
-		idt::init_idt();
+	// Safety: GDT is initialized
+	unsafe { idt::init_idt() };
 
-		// enables CPU hardware interrupts (e.g. keyboard keys)
-		// SAFETY: IDT is initialized
-		idt::enable_hardware_interrupts();
-	}
+	// enables CPU hardware interrupts (e.g. keyboard keys)
+	// Safety: IDT is initialized
+	unsafe { idt::enable_hardware_interrupts() };
 
 	let multiboot_info_ptr = unsafe { &*(multiboot_info_ptr as *const MultibootInfo) };
 	init_physical_memory(multiboot_info_ptr);
+
+	// Safety: physical memory is initialized
+	let directory_phys_addr = unsafe { init_virtual_memory() };
+
+	unsafe {
+		enable_paging(directory_phys_addr);
+	}
 }
 
 /// Prints the panic info and enters an infinite loop

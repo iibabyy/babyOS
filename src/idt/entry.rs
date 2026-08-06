@@ -72,8 +72,8 @@ pub enum IdtGateType {
 	// TaskGate = 0x5,
 	// InterruptGate16 = 0x6,
 	// TrapGate16 = 0x7,
-	InterruptGate32 = 0xe, /* We use this
-	                        * TrapGate32 = 0xF, */
+	InterruptGate32 = 0xe, // We only use this
+	TrapGate32 = 0xF,
 }
 
 /// A pointer descriptor to load IDT into the CPU

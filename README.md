@@ -18,6 +18,7 @@ make # Builds the iso, then runs Qemu
 
 - `src/kernel.rs` — kernel entry point (`_entrypoint`) and test runner
 - `src/lib.rs` — `baby_lib`: panic handler and module wiring
+- `src/memory/` — physical/virtual memory initialization and management
 - `src/io/` — VGA text buffer and serial driver
 - `src/interrupts/` — IDT and exception handlers
 - `tools/build/` — boot stubs, linker script, target spec, GRUB config

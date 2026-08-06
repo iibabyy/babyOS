@@ -22,7 +22,7 @@ pub fn shell_loop() -> ! {
 		unsafe {
 			asm!("hlt"); // freeze until next interrupt
 
-			if COMMAND_READY == false {
+			if !COMMAND_READY {
 				continue;
 			}
 
