@@ -47,17 +47,15 @@
 
 mod multiboot;
 pub mod page_fault;
-pub mod paging;
+pub mod page_directory;
 mod pmm;
-
-use core::arch::asm;
 
 use self::multiboot::MemoryMapEntry;
 pub use self::multiboot::{
 	GRUB_MULTIBOOT_MAGIC,
 	MultibootInfo,
 };
-use self::paging::{
+use self::page_directory::{
 	PageDirectory,
 	PageEntryFlags,
 	PageTable,
@@ -65,10 +63,6 @@ use self::paging::{
 use self::pmm::{
 	FRAME_SIZE,
 	GLOBAL_ALLOCATOR,
-};
-pub use self::pmm::{
-	pmm_allocate_frame,
-	pmm_deallocate_frame,
 };
 
 // kernel start and end addresses from link.ld (tools/build/link.ld)
@@ -136,14 +130,14 @@ pub fn init_physical_memory(mb_info: &MultibootInfo) {
 /// # Safety
 ///  - physical memory must be initialized
 pub unsafe fn init_virtual_memory() -> u32 {
-	let directory_phys_address = pmm_allocate_frame().expect("No memory for page directory");
+	let directory_phys_address = kmalloc().expect("No memory for page directory");
 	let directory = unsafe { &mut *(directory_phys_address as *mut PageDirectory) };
 
 	// clear the page frame
 	unsafe { core::ptr::write_bytes(directory_phys_address as *mut u8, 0, FRAME_SIZE) };
 
 	//  This table will cover the first 4MB of RAM
-	let table0_phys = pmm_allocate_frame().expect("No memory for page directory");
+	let table0_phys = kmalloc().expect("No memory for page directory");
 	let table0 = unsafe { &mut *(table0_phys as *mut PageTable) };
 
 	// fill table0 with physical addresses in the first 4MB
@@ -165,31 +159,22 @@ pub unsafe fn init_virtual_memory() -> u32 {
 	directory_phys_address
 }
 
-/// Enables paging
+/// Allocates a physical page frame of 4096 bytes
 ///
-/// # Safety
-///  - physical/virtual memory must have been well initialized (good luck ^^)
-pub unsafe fn enable_paging(directory_phys_addr: u32) {
-	unsafe {
-		// Put the PageDirectory in the CR3 register
-		// this is the only purpose of this register
-		asm!(
-			"mov cr3, {0}",
-			in(reg) directory_phys_addr
-		);
+/// Returns None if there is no free memory available
+///
+/// Note: this helper locks the [GLOBAL_ALLOCATOR], so it should not be used
+/// after manually locking the allocator
+pub fn kmalloc() -> Option<u32> {
+	GLOBAL_ALLOCATOR.lock().allocate_frame()
+}
 
-		// read cr0
-		// this register holds many flags to switch CPU features
-		// bit 31 is the one for paging
-		let mut cr0: u32;
-		asm!("mov {0}, cr0", out(reg) cr0);
-
-		// set bit 31 to 1
-		cr0 |= 0x80000000;
-
-		asm!(
-			"mov cr0, {0}",
-			in(reg) cr0,
-		);
-	}
+/// Deallocates a physical page frame
+///
+/// `physical_address` should be the first address of a physical page frame
+///
+/// Note: this helper locks the [GLOBAL_ALLOCATOR], so it should not be used
+/// after manually locking the allocator
+pub fn kfree(physical_address: u32) {
+	GLOBAL_ALLOCATOR.lock().deallocate_frame(physical_address);
 }

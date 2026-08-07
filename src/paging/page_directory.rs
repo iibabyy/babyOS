@@ -1,3 +1,4 @@
+use core::arch::asm;
 use core::ops::{
 	Index,
 	IndexMut,
@@ -13,8 +14,37 @@ use modular_bitfield::{
 	bitfield,
 };
 
-use crate::memory::pmm::FRAME_SIZE;
-use crate::pmm_allocate_frame;
+use crate::paging::pmm::FRAME_SIZE;
+use crate::kmalloc;
+
+/// Enables paging
+///
+/// # Safety
+///  - physical/virtual memory must have been well initialized (good luck ^^)
+pub unsafe fn enable_paging(directory_phys_addr: u32) {
+	unsafe {
+		// Put the PageDirectory in the CR3 register
+		// this is the only purpose of this register
+		asm!(
+			"mov cr3, {0}",
+			in(reg) directory_phys_addr
+		);
+
+		// read cr0
+		// this register holds many flags to switch CPU features
+		// bit 31 is the one for paging
+		let mut cr0: u32;
+		asm!("mov {0}, cr0", out(reg) cr0);
+
+		// set bit 31 to 1
+		cr0 |= 0x80000000;
+
+		asm!(
+			"mov cr0, {0}",
+			in(reg) cr0,
+		);
+	}
+}
 
 /// Contains 1023 pointers to [PageTable]s
 /// The 1024-th pointer is a pointer to a [PageDirectory] (backdoor)
@@ -73,7 +103,7 @@ impl PageDirectory {
 	///  - `self` must have been created using [PageDirectory::backdoor_directory]
 	unsafe fn allocate_table_at(&mut self, dir_index: usize) {
 		let new_physical_frame =
-			pmm_allocate_frame().expect("Out of memory when creating page table!");
+			kmalloc().expect("Out of memory when creating page table!");
 
 		// We can't directly use `new_physical_frame` to clear the memory,
 		// as the CPU treats every address as a virtual addresses.
@@ -273,7 +303,9 @@ pub struct PageEntryFlags {
 	/// True if user (ring 3) can access
 	pub is_user_space: bool,
 
-	#[expect(unused)]
+	// some cache control flags
+	// not used for now
+	#[skip]
 	reserved_1: B2,
 
 	/// CPU sets this when page is read/written
@@ -282,10 +314,11 @@ pub struct PageEntryFlags {
 	/// CPU sets this when page is written to (page tables only).
 	pub is_dirty: bool,
 
-	/// For page directories only
+	/// For [PagePointer] on [PageDirectory] only.
+	/// 0 for 4KiB, 1 for 4MiB 
 	pub is_4_mb_pages: bool,
 
-	#[expect(unused)]
+	#[skip]
 	reserved_2: B4,
 }
 

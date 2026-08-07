@@ -4,7 +4,7 @@ use crate::idt::{
 	InterruptStackFrame,
 };
 use crate::keyboard::keyboard_interrupt_handler;
-use crate::memory::page_fault::page_fault_interrupt_handler;
+use crate::paging::page_fault::page_fault_interrupt_handler;
 use crate::println;
 
 /// Initialize our interrupt handlers

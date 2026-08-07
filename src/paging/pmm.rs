@@ -7,26 +7,6 @@ pub(crate) const FRAME_SIZE: usize = 4096;
 pub(crate) const TOTAL_FRAMES: usize = 1_048_576; // 4GB / 4096
 const BITMAP_LENGTH: usize = TOTAL_FRAMES / 32; // 32,768 u32 blocks
 
-/// Allocates a frame of 4096 bytes
-///
-/// Returns None if there is no free memory available
-///
-/// Note: this helper locks the [GLOBAL_ALLOCATOR], so it should not be used
-/// after manually locking the allocator
-pub fn pmm_allocate_frame() -> Option<u32> {
-	GLOBAL_ALLOCATOR.lock().allocate_frame()
-}
-
-/// Deallocates a frame
-///
-/// `physical_address` should be the first address of a frame
-///
-/// Note: this helper locks the [GLOBAL_ALLOCATOR], so it should not be used
-/// after manually locking the allocator
-pub fn pmm_deallocate_frame(physical_address: u32) {
-	GLOBAL_ALLOCATOR.lock().deallocate_frame(physical_address);
-}
-
 pub struct FrameAllocator {
 	/// 0 = free, 1 = used.
 	bitmap: [u32; BITMAP_LENGTH],
@@ -44,7 +24,7 @@ impl FrameAllocator {
 	/// Allocates a 4096 bytes frame
 	///
 	/// Returns None if there is no free memory available
-	fn allocate_frame(&mut self) -> Option<u32> {
+	pub fn allocate_frame(&mut self) -> Option<u32> {
 		// find the first 32-bit block that isn't completely full of 1s
 		for (index, &block) in self.bitmap.iter().enumerate() {
 			if block != u32::MAX {

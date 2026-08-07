@@ -19,7 +19,7 @@ pub struct MultibootInfo {
 	pub mmap_addr: u32,
 }
 
-/// entries given by the bootloader at [MultibootInfo].mmap_addr
+/// entries given by the bootloader at [MultibootInfo::mmap_addr]
 #[repr(C, packed)]
 pub struct MemoryMapEntry {
 	/// entry.size doesn't include itself

@@ -11,7 +11,7 @@ mod gdt;
 mod idt;
 mod keyboard;
 mod macros;
-mod memory;
+mod paging;
 mod pic;
 mod shared;
 mod shell;
@@ -20,14 +20,15 @@ mod vga;
 use core::arch::asm;
 use core::panic::PanicInfo;
 
+use crate::paging::page_directory::enable_paging;
+
 pub use self::gdt::dump::dump_kernel_stack;
-pub use self::memory::{
+pub use self::paging::{
 	GRUB_MULTIBOOT_MAGIC,
 	MultibootInfo,
 	init_physical_memory,
-	pmm_allocate_frame,
-	pmm_deallocate_frame,
-	enable_paging,
+	kmalloc,
+	kfree,
 	init_virtual_memory,
 };
 pub use self::shell::shell_loop;

@@ -41,7 +41,7 @@ pub struct PageFaultErrorCode {
 	/// false = virtual address was mapped
 	/// true = virtual address was not mapped
 	/// 
-	/// [PageDirectory]: crate::memory::paging::PageDirectory
+	/// [PageDirectory]: crate::paging::page_directory::PageDirectory
 	pub is_mapped: bool,
 
 	/// Was the instruction attempting to write memory ?
