@@ -27,6 +27,8 @@ pub use self::memory::{
 	init_physical_memory,
 	pmm_allocate_frame,
 	pmm_deallocate_frame,
+	enable_paging,
+	init_virtual_memory,
 };
 pub use self::shell::shell_loop;
 pub use self::vga::{
@@ -34,10 +36,7 @@ pub use self::vga::{
 	Color,
 	GLOBAL_VGA_SCREEN,
 };
-use crate::memory::{
-	enable_paging,
-	init_virtual_memory,
-};
+use self::idt::interrupts::{disable_hardware_interrupts, enable_hardware_interrupts};
 
 // TODO: add options to asm!() calls (for better compiler optimizations)
 
@@ -54,7 +53,7 @@ pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
 
 	// enables CPU hardware interrupts (e.g. keyboard keys)
 	// Safety: IDT is initialized
-	unsafe { idt::enable_hardware_interrupts() };
+	unsafe { enable_hardware_interrupts() };
 
 	let multiboot_info_ptr = unsafe { &*(multiboot_info_ptr as *const MultibootInfo) };
 	init_physical_memory(multiboot_info_ptr);
@@ -73,7 +72,7 @@ pub fn panic(info: &PanicInfo) -> ! {
 	println!("{info}");
 
 	loop {
-		idt::disable_hardware_interrupts();
+		disable_hardware_interrupts();
 		unsafe {
 			asm!("hlt");
 		}

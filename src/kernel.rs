@@ -3,6 +3,8 @@
 #![no_main]
 #![no_std]
 
+use core::hint;
+
 use kernel::{
 	dump_kernel_stack,
 	pmm_allocate_frame,
@@ -15,14 +17,9 @@ use kernel::{
 pub extern "C" fn _entrypoint(magic_number: u32, multiboot_info_ptr: u32) -> ! {
 	kernel::init(magic_number, multiboot_info_ptr);
 
-	if let Some(frame_addr) = pmm_allocate_frame() {
-		let address = unsafe { &mut *(frame_addr as *const u8 as *mut u8) };
+	let test = unsafe { *(0x80000000 as *const u32) };
 
-		*address = 12;
-		println!("Successfuly allocated memory {address:p} and writed {address} in it");
-		pmm_deallocate_frame(frame_addr);
-		println!("Successfuly deallocated memory");
-	}
+	hint::black_box(test);
 
 	kernel::shell_loop();
 }

@@ -20,7 +20,8 @@ static mut COMMAND_READY: bool = false;
 pub fn shell_loop() -> ! {
 	loop {
 		unsafe {
-			asm!("hlt"); // freeze until next interrupt
+			// freeze until next interrupt
+			asm!("hlt");
 
 			if !COMMAND_READY {
 				continue;
@@ -31,7 +32,7 @@ pub fn shell_loop() -> ! {
 
 				"halt" => {
 					println!("System halted");
-					idt::disable_hardware_interrupts();
+					idt::interrupts::disable_hardware_interrupts();
 					asm!("hlt"); // freeze CPU
 				}
 

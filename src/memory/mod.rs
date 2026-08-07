@@ -46,7 +46,8 @@
 //! [PagePointer]: self::paging::PagePointer
 
 mod multiboot;
-mod paging;
+pub mod page_fault;
+pub mod paging;
 mod pmm;
 
 use core::arch::asm;

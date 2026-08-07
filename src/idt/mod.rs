@@ -1,13 +1,13 @@
 pub mod entry;
+pub mod interrupts;
 
 use core::arch::asm;
 
+use self::interrupts::init_interrupt_handlers;
 use self::entry::{
 	IdtEntry,
 	IdtPointer,
 };
-use crate::keyboard::keyboard_interrupt_handler;
-use crate::println;
 
 static mut IDT: [IdtEntry; 256] = [IdtEntry::zeroed(); 256];
 static mut IDT_PTR: IdtPointer = IdtPointer {
@@ -42,51 +42,5 @@ pub unsafe fn init_idt() {
 			"lidt [{ptr}]",
 			ptr = in(reg) &IDT_PTR
 		);
-	}
-}
-
-/// Initialize our interrupt handlers
-pub fn init_interrupt_handlers() {
-	register_interrupt_handler(Interrupt::Breakpoint, breakpoint_interrupt_handler);
-	register_interrupt_handler(Interrupt::Keyboard, keyboard_interrupt_handler);
-}
-
-/// Sets an handler for an Interrupt
-pub fn register_interrupt_handler(
-	interrupt: Interrupt,
-	handler: extern "x86-interrupt" fn(&mut InterruptStackFrame),
-) {
-	const CODE_SEGMENT_OFFSET: u16 = core::mem::size_of::<IdtEntry>() as u16;
-
-	let handler_address = handler as *const () as u32;
-
-	unsafe {
-		IDT[interrupt as usize].set_handler_fn(handler_address, CODE_SEGMENT_OFFSET);
-	}
-}
-
-extern "x86-interrupt" fn breakpoint_interrupt_handler(stack_frame: &mut InterruptStackFrame) {
-	println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
-}
-
-/// Interrupt IDs
-pub enum Interrupt {
-	Breakpoint = 3,
-	Keyboard = 33,
-}
-
-/// Enables CPU hardware interrupts (e.g. keyboard keys)
-///
-/// SAFETY: IDT must be initialized
-pub unsafe fn enable_hardware_interrupts() {
-	unsafe {
-		core::arch::asm!("sti");
-	}
-}
-
-/// Disables CPU hardware interrupts
-pub fn disable_hardware_interrupts() {
-	unsafe {
-		core::arch::asm!("cli");
 	}
 }
