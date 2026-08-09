@@ -14,8 +14,8 @@ use modular_bitfield::{
 	bitfield,
 };
 
-use crate::paging::pmm::FRAME_SIZE;
 use crate::kmalloc;
+use crate::paging::pmm::FRAME_SIZE;
 
 /// Enables paging
 ///
@@ -31,13 +31,13 @@ pub unsafe fn enable_paging(directory_phys_addr: u32) {
 		);
 
 		// read cr0
-		// this register holds many flags to switch CPU features
+		// this register holds many flags to switch on and off CPU features
 		// bit 31 is the one for paging
 		let mut cr0: u32;
 		asm!("mov {0}, cr0", out(reg) cr0);
 
 		// set bit 31 to 1
-		cr0 |= 0x80000000;
+		cr0 |= 1 << 31;
 
 		asm!(
 			"mov cr0, {0}",
@@ -75,7 +75,12 @@ impl PageDirectory {
 	///  - Paging must be turned on
 	///  - `setup_directory_backdoor` must have been called
 	///  - `physical_addr` must point to a valid, allocated physical address
-	pub(crate) unsafe fn map_page(virtual_addr: u32, physical_addr: u32, flags: PageEntryFlags) {
+	pub(crate) unsafe fn map_page(
+		virtual_addr: u32,
+		physical_addr: u32,
+		is_user_space: bool,
+		is_writable: bool,
+	) {
 		// cut the virtual address in the following way:
 		//  - 10 first bits: directory offset
 		//  - 10 middle bits: table offset
@@ -90,9 +95,17 @@ impl PageDirectory {
 			unsafe { directory.allocate_table_at(dir_offset) };
 		}
 
-		let backdoor_table = unsafe { PageDirectory::backdoor_table_at(dir_offset) };
+		let backdoor_table = unsafe { directory.get_page_table(dir_offset) };
+
+		let flags = PageEntryFlags::new()
+			.with_is_present(true)
+			.with_is_user_space(is_user_space)
+			.with_is_writable(is_writable);
 
 		backdoor_table[table_offset].set(physical_addr, flags);
+
+		// invlpg (Invalidate Page) tells the CPU we changed the mapping for this virtual address
+		unsafe { asm!("invlpg [{}]", in(reg) virtual_addr); }
 	}
 
 	/// Allocate a [PageTable] and set a pointer to it at `backdoor_directory()[dir_index]`
@@ -102,45 +115,53 @@ impl PageDirectory {
 	///  - [PageDirectory::setup_directory_backdoor] must have been called
 	///  - `self` must have been created using [PageDirectory::backdoor_directory]
 	unsafe fn allocate_table_at(&mut self, dir_index: usize) {
-		let new_physical_frame =
-			kmalloc().expect("Out of memory when creating page table!");
+		let table_physical_address = kmalloc().expect("Out of memory when creating page table!");
 
-		// We can't directly use `new_physical_frame` to clear the memory,
+		let flags = PageEntryFlags::new()
+			.with_is_present(true)
+			.with_is_writable(true)
+			// Since this page entry points to a PageTable, we can set it as user space since the
+			// CPU will also check for the actual physical page frame privilege ring before a
+			// read/write
+			.with_is_user_space(true);
+
+		self.table_pointers[dir_index].set(table_physical_address, flags);
+
+		// We can't directly use `table_physical_address` to clear the memory,
 		// as the CPU treats every address as a virtual addresses.
-
-		let flags = PageEntryFlags::new().with_is_present(true).with_is_writable(true);
-
-		self.table_pointers[dir_index].set(new_physical_frame, flags);
-
+		// So we're using a backdoor trick to get its virtual address (cf. `get_page_table()` doc)
+		let backdoored_table = unsafe { self.get_page_table(dir_index) };
 		unsafe {
-			core::ptr::write_bytes(new_physical_frame as *mut u8, 0, FRAME_SIZE);
+			core::ptr::write_bytes(backdoored_table as *mut PageTable, 0, 1);
 		};
 	}
 
-	/// Creates a backdoor to a [PageDirectory] by setting its address into the last [PagePointer]
-	/// of its own array.
+	/// Creates a backdoor to the [PageDirectory] by making the last [PagePointer] of the
+	/// [PageDirectory] points to the directory's own physical address.
 	///
 	/// When we turn paging on, the CPU can't access the [PageDirectory] by its physical address
 	/// anymore, as it would treat this address as a virtual address, and thus translate it into a
 	/// completely different physical address.
 	///
-	/// To solve this, we set the pointer in the last [PagePointer] of the [PageDirectory] to its
-	/// own physical address.
+	/// To solve this, before activating paging, we make the last [PagePointer] of the
+	/// [PageDirectory] points to the directory's own physical address.
+	/// We will then be able to access the [PageDirectory] using the `0xFFFFF000` virtual address.
 	///
-	/// When we then access the `0xFFFFF000` virtual address, the CPU will access the
-	/// [PageDirectory] by doing the following:
+	/// When we access the `0xFFFFF000` virtual address, the CPU will access the [PageDirectory] by
+	/// doing the following:
 	///  - First 10 bits: 1023: goes to the physical address pointed by the last [PagePointer] of
 	///    the [PageDirectory], which is the [PageDirectory] physical address.
 	///  - Middle 10 bits: 1023: again, goes to the [PageDirectory] physical address.
 	///  - Last 12 bits: 0: stays on the first byte of the [PageDirectory] physical address.
 	///
-	/// Voilà :) The CPU will return the original [PageDirectory], if we ask for the right amount of bytes.
+	/// Voilà :) The CPU will return the original [PageDirectory], if we ask for the right amount
+	/// of bytes.
 	///
 	/// You can read [https://wiki.osdev.org/X86_Paging] for a better understanding.
 	///
 	/// # Notes
-	///  - I only created [PageDirectory].backdoor for type safety, but,
-	///    in memory, it's represented exactly as the 1024-th [PagePointer] of the pointer array
+	///  - I only created [PageDirectory::backdoor] for type safety, but, in memory, it's
+	///    represented exactly as the 1024-th [PagePointer] of the pointer array
 	pub(crate) fn setup_directory_backdoor(&mut self) {
 		let self_addr = &raw const *self;
 		let flags = PageEntryFlags::new().with_is_present(true).with_is_writable(true);
@@ -161,8 +182,8 @@ impl PageDirectory {
 	///  - Middle 10 bits: 1023: again, goes to the [PageDirectory] physical address.
 	///  - Last 12 bits: 0: stays on the first byte of the [PageDirectory] physical address.
 	///
-	/// We then simply take size_of([PageDirectory]), or size_of([PageEntry; 1024]) bytes
-	/// from this address.
+	/// We then simply take size_of([PageDirectory]) (1024 * size_of([PagePointer])) from this
+	/// address.
 	///
 	/// # Safety
 	///  - Paging must be turned on
@@ -176,21 +197,21 @@ impl PageDirectory {
 	/// When paging is turned on, we cannot access a [PageTable] using the physical address
 	/// stored in the [PageDirectory], as the CPU would treat it as a virtual address and crash.
 	///
-	/// To solve this, we use a backdoor starting at virtual address `0xFFC00000`.
+	/// To solve this, we use a backdoor starting at virtual address `0xFFC00000`:
 	///
 	/// When we access `0xFFC00000 + (index * 4096)`, the CPU maps it to the right [PageTable]
 	/// physical address by doing the following:
 	///  - First 10 bits: 1023: goes to the physical address pointed by the last [PagePointer] of
 	///    the [PageDirectory], which is the [PageDirectory] itself.
-	///  - Middle 10 bits: `index`: goes to the physical address pointed by the `index`-th
-	///    [PagePointer] of the [PageDirectory], which is the `index`-th [PageTable]
+	///  - Middle 10 bits: `index * 4096`: goes to the physical address pointed by the `index`-th
+	///    [PagePointer] of the [PageDirectory], which points to the `index`-th [PageTable].
 	///  - Last 12 bits: 0: stays on the first byte of that [PageTable].
 	///
 	/// # Safety
 	///  - Paging must be turned on.
 	///  - [PageDirectory::setup_directory_backdoor] must have been called
 	///  - The `index`-th [PagePointer] in [PageDirectory] must be allocated and marked as present
-	const unsafe fn backdoor_table_at(index: usize) -> &'static mut PageTable {
+	const unsafe fn get_page_table(&mut self, index: usize) -> &'static mut PageTable {
 		let table_address = 0xffc00000 + (index * 4096);
 		unsafe { &mut *(table_address as *mut PageTable) }
 	}
@@ -269,8 +290,11 @@ impl PagePointer {
 	pub fn set(&mut self, physical_address: u32, flags: PageEntryFlags) {
 		let b20_address = page_frame_address_to_b20(physical_address);
 
-		self.0.set_flags(flags);
-		self.0.set_physical_address(b20_address);
+		let new_page_entry = RawPageEntry::new()
+			.with_flags(flags)
+			.with_physical_address(b20_address);
+
+		self.0 = new_page_entry;
 	}
 
 	fn flags(&self) -> PageEntryFlags {
@@ -315,7 +339,7 @@ pub struct PageEntryFlags {
 	pub is_dirty: bool,
 
 	/// For [PagePointer] on [PageDirectory] only.
-	/// 0 for 4KiB, 1 for 4MiB 
+	/// 0 for 4KiB, 1 for 4MiB
 	pub is_4_mb_pages: bool,
 
 	#[skip]
