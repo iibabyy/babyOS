@@ -34,22 +34,26 @@
 //!    [PageDirectory], which is the [PageDirectory] physical address.
 //!  - Middle 10 bits: 1023: again, goes to the [PageDirectory] physical address.
 //!  - Last 12 bits: 0: stays on the first byte of the [PageDirectory] physical address.
-//! 
-//! Voilà! The CPU will then return the [PageDirectory] (if we ask for size_of([PageDirectory]) bytes)
+//!
+//! Voilà! The CPU will then return the [PageDirectory] (if we ask for size_of([PageDirectory])
+//! bytes)
 //!
 //! #### Documentation
-//! 
+//!
 //! You can read [https://wiki.osdev.org/Memory_management] and [https://wiki.osdev.org/X86_Paging]
 //! for a better understanding.
 //!
 //! [FrameAllocator]: self::pmm::FrameAllocator
 //! [PagePointer]: self::paging::PagePointer
 
+pub mod alloc;
 mod multiboot;
-pub mod page_fault;
 pub mod page_directory;
+pub mod page_fault;
 mod pmm;
+mod vmm;
 
+use self::alloc::kmalloc;
 use self::multiboot::MemoryMapEntry;
 pub use self::multiboot::{
 	GRUB_MULTIBOOT_MAGIC,
@@ -130,14 +134,14 @@ pub fn init_physical_memory(mb_info: &MultibootInfo) {
 /// # Safety
 ///  - physical memory must be initialized
 pub unsafe fn init_virtual_memory() -> u32 {
-	let directory_phys_address = kmalloc().expect("No memory for page directory");
+	let directory_phys_address = kmalloc().expect("Out of memory");
 	let directory = unsafe { &mut *(directory_phys_address as *mut PageDirectory) };
 
 	// clear the page frame
 	unsafe { core::ptr::write_bytes(directory_phys_address as *mut u8, 0, FRAME_SIZE) };
 
 	//  This table will cover the first 4MB of RAM
-	let table0_phys = kmalloc().expect("No memory for page directory");
+	let table0_phys = kmalloc().expect("Out of memory");
 	let table0 = unsafe { &mut *(table0_phys as *mut PageTable) };
 
 	// fill table0 with physical addresses in the first 4MB
@@ -157,24 +161,4 @@ pub unsafe fn init_virtual_memory() -> u32 {
 	directory.setup_directory_backdoor();
 
 	directory_phys_address
-}
-
-/// Allocates a physical page frame of 4096 bytes
-///
-/// Returns None if there is no free memory available
-///
-/// Note: this helper locks the [GLOBAL_ALLOCATOR], so it should not be used
-/// after manually locking the allocator
-pub fn kmalloc() -> Option<u32> {
-	GLOBAL_ALLOCATOR.lock().allocate_frame()
-}
-
-/// Deallocates a physical page frame
-///
-/// `physical_address` should be the first address of a physical page frame
-///
-/// Note: this helper locks the [GLOBAL_ALLOCATOR], so it should not be used
-/// after manually locking the allocator
-pub fn kfree(physical_address: u32) {
-	GLOBAL_ALLOCATOR.lock().deallocate_frame(physical_address);
 }

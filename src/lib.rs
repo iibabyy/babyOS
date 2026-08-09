@@ -20,15 +20,22 @@ mod vga;
 use core::arch::asm;
 use core::panic::PanicInfo;
 
-use crate::paging::page_directory::enable_paging;
-
 pub use self::gdt::dump::dump_kernel_stack;
+use self::idt::interrupts::{
+	disable_hardware_interrupts,
+	enable_hardware_interrupts,
+};
+pub use self::paging::alloc::{
+	kfree,
+	kmalloc,
+	vmalloc,
+	vmalloc_size,
+	vfree,
+};
 pub use self::paging::{
 	GRUB_MULTIBOOT_MAGIC,
 	MultibootInfo,
 	init_physical_memory,
-	kmalloc,
-	kfree,
 	init_virtual_memory,
 };
 pub use self::shell::shell_loop;
@@ -37,7 +44,7 @@ pub use self::vga::{
 	Color,
 	GLOBAL_VGA_SCREEN,
 };
-use self::idt::interrupts::{disable_hardware_interrupts, enable_hardware_interrupts};
+use crate::paging::page_directory::enable_paging;
 
 // TODO: add options to asm!() calls (for better compiler optimizations)
 

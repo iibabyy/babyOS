@@ -14,8 +14,7 @@ use modular_bitfield::{
 	bitfield,
 };
 
-use crate::kmalloc;
-use crate::paging::pmm::FRAME_SIZE;
+use crate::paging::alloc::kmalloc;
 
 /// Enables paging
 ///
@@ -105,7 +104,33 @@ impl PageDirectory {
 		backdoor_table[table_offset].set(physical_addr, flags);
 
 		// invlpg (Invalidate Page) tells the CPU we changed the mapping for this virtual address
-		unsafe { asm!("invlpg [{}]", in(reg) virtual_addr); }
+		unsafe {
+			asm!("invlpg [{}]", in(reg) virtual_addr);
+		}
+	}
+
+	/// # Safety:
+	///  - Paging must be turned on
+	///  - `setup_directory_backdoor` must have been called
+	pub(crate) unsafe fn unmap_page(virtual_addr: u32) -> Option<u32> {
+		let dir_offset = (virtual_addr >> 22) as usize; // Top 10 bits
+		let table_offset = ((virtual_addr >> 12) & 0x3ff) as usize; // Middle 10 bits
+
+		let directory = unsafe { Self::backdoor_directory() };
+
+		if !directory[dir_offset].flags().is_present() {
+			return None;
+		}
+
+		let backdoor_table = unsafe { directory.get_page_table(dir_offset) };
+		let physical_addr = backdoor_table[table_offset].physical_addr();
+
+		backdoor_table[table_offset].clear();
+
+		// invlpg (Invalidate Page) tells the CPU we changed the mapping for this virtual address
+		unsafe { asm!("invlpg [{}]", in(reg) virtual_addr) };
+
+		Some(physical_addr)
 	}
 
 	/// Allocate a [PageTable] and set a pointer to it at `backdoor_directory()[dir_index]`
@@ -115,7 +140,7 @@ impl PageDirectory {
 	///  - [PageDirectory::setup_directory_backdoor] must have been called
 	///  - `self` must have been created using [PageDirectory::backdoor_directory]
 	unsafe fn allocate_table_at(&mut self, dir_index: usize) {
-		let table_physical_address = kmalloc().expect("Out of memory when creating page table!");
+		let table_physical_address = kmalloc().expect("Out of memory");
 
 		let flags = PageEntryFlags::new()
 			.with_is_present(true)
@@ -290,11 +315,14 @@ impl PagePointer {
 	pub fn set(&mut self, physical_address: u32, flags: PageEntryFlags) {
 		let b20_address = page_frame_address_to_b20(physical_address);
 
-		let new_page_entry = RawPageEntry::new()
-			.with_flags(flags)
-			.with_physical_address(b20_address);
+		let new_page_entry =
+			RawPageEntry::new().with_flags(flags).with_physical_address(b20_address);
 
 		self.0 = new_page_entry;
+	}
+
+	pub fn clear(&mut self) {
+		self.0 = RawPageEntry::new()
 	}
 
 	fn flags(&self) -> PageEntryFlags {

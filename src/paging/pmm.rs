@@ -24,7 +24,7 @@ impl FrameAllocator {
 	/// Allocates a 4096 bytes frame
 	///
 	/// Returns None if there is no free memory available
-	pub fn allocate_frame(&mut self) -> Option<u32> {
+	pub fn allocate_physical_frame(&mut self) -> Option<u32> {
 		// find the first 32-bit block that isn't completely full of 1s
 		for (index, &block) in self.bitmap.iter().enumerate() {
 			if block != u32::MAX {
@@ -46,7 +46,7 @@ impl FrameAllocator {
 	/// Deallocates a frame
 	///
 	/// `physical_address` should be the first address of a frame
-	pub fn deallocate_frame(&mut self, physical_address: u32) {
+	pub fn deallocate_physical_frame(&mut self, physical_address: u32) {
 		let frame_number = physical_address / FRAME_SIZE as u32;
 		self.set_frame_free(frame_number);
 	}
