@@ -1,6 +1,6 @@
 use core::sync::atomic::AtomicUsize;
 
-use crate::paging::alloc::{
+use crate::paging::malloc::{
 	kfree,
 	kmalloc,
 };

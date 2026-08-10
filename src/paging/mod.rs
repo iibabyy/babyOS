@@ -46,14 +46,14 @@
 //! [FrameAllocator]: self::pmm::FrameAllocator
 //! [PagePointer]: self::paging::PagePointer
 
-pub mod alloc;
+pub mod malloc;
 mod multiboot;
 pub mod page_directory;
 pub mod page_fault;
 mod pmm;
 mod vmm;
 
-use self::alloc::kmalloc;
+use self::malloc::kmalloc;
 use self::multiboot::MemoryMapEntry;
 pub use self::multiboot::{
 	GRUB_MULTIBOOT_MAGIC,

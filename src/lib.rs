@@ -25,7 +25,7 @@ use self::idt::interrupts::{
 	disable_hardware_interrupts,
 	enable_hardware_interrupts,
 };
-pub use self::paging::alloc::{
+pub use self::paging::malloc::{
 	kfree,
 	kmalloc,
 	vmalloc,

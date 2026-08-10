@@ -14,7 +14,7 @@ use modular_bitfield::{
 	bitfield,
 };
 
-use crate::paging::alloc::kmalloc;
+use crate::paging::malloc::kmalloc;
 
 /// Enables paging
 ///
