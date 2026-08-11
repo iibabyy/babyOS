@@ -1,7 +1,6 @@
 /// VGA colors
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-#[expect(missing_docs)]
 pub enum Color {
 	Black = 0,
 	Blue = 1,

@@ -46,14 +46,11 @@
 //! [FrameAllocator]: self::pmm::FrameAllocator
 //! [PagePointer]: self::paging::PagePointer
 
-pub mod malloc;
 mod multiboot;
 pub mod page_directory;
 pub mod page_fault;
-mod pmm;
-mod vmm;
+pub mod pmm;
 
-use self::malloc::kmalloc;
 use self::multiboot::MemoryMapEntry;
 pub use self::multiboot::{
 	GRUB_MULTIBOOT_MAGIC,
@@ -64,21 +61,20 @@ use self::page_directory::{
 	PageEntryFlags,
 	PageTable,
 };
-use self::pmm::{
-	FRAME_SIZE,
-	GLOBAL_ALLOCATOR,
-};
+use self::pmm::{PHYSICAL_ALLOCATOR, kmalloc, FRAME_SIZE};
 
 // kernel start and end addresses from link.ld (tools/build/link.ld)
 unsafe extern "C" {
-	static kernel_start: u32;
+	/// 0x00100000
+	pub(crate) static kernel_start: u32;
+
 	static kernel_end: u32;
 }
 
 /// Initializes the physical memory.
 ///
 /// It reads the bootloader memory map described by `mb_info`
-/// and marks the unused memory spaces in the [GLOBAL_ALLOCATOR] as free.
+/// and marks the unused memory spaces in the [PHYSICAL_ALLOCATOR] as free.
 ///
 /// #### Note:
 /// the bootloader sends this map when loading the kernel to describe what
@@ -88,7 +84,7 @@ pub fn init_physical_memory(mb_info: &MultibootInfo) {
 	assert!((mb_info.flags & (1 << 6)) != 0, "no memory map provided by GRUB");
 
 	// at this point, every address in the allocator is marked as used
-	let mut allocator = GLOBAL_ALLOCATOR.lock();
+	let mut allocator = PHYSICAL_ALLOCATOR.lock();
 
 	let mut current_addr = mb_info.mmap_addr;
 	let end_addr = mb_info.mmap_addr + mb_info.mmap_length;

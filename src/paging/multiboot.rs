@@ -3,7 +3,6 @@ pub const GRUB_MULTIBOOT_MAGIC: u32 = 0x2badb002;
 
 /// Information passed by the bootloader
 #[repr(C)]
-#[expect(missing_docs)]
 pub struct MultibootInfo {
 	pub flags: u32,
 	pub mem_lower: u32,

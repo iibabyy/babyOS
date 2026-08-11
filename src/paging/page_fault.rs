@@ -17,16 +17,16 @@ pub extern "x86-interrupt" fn page_fault_interrupt_handler(
 
 	if !parsed_error.is_user_mode() {
 		// FATA: the Kernel itself caused the fault
-		panic!(
+		println!(
 			"EXCEPTION: PAGE FAULT\n\
 			Accessed Address: {faulting_address:#010X}\n\
 			Error Context: {parsed_error:#?}\n\
 			Stack Frame: {stack_frame:#?}",
 		)
+	} else {
+		println!("Segmentation Fault (Core Dumped).");
+		println!("User process tried to access invalid memory at {:#x}.", faulting_address);
 	}
-
-	println!("Segmentation Fault (Core Dumped).");
-	println!("User process tried to access invalid memory at {:#x}.", faulting_address);
 
 	// hang the current thread
 	loop {

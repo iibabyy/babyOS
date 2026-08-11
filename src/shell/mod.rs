@@ -1,11 +1,13 @@
 use core::arch::asm;
 use core::str;
 
+use crate::gdt::dump::dump_kernel_stack;
 use crate::shared::outb;
-use crate::vga::VGA_BUFFER_WIDTH;
-use crate::{
+use crate::vga::{
 	GLOBAL_VGA_SCREEN,
-	dump_kernel_stack,
+	VGA_BUFFER_WIDTH,
+};
+use crate::{
 	idt,
 	println,
 };

@@ -14,7 +14,9 @@ use modular_bitfield::{
 	bitfield,
 };
 
-use crate::paging::malloc::kmalloc;
+use crate::paging::pmm::kmalloc;
+
+pub const PAGE_TABLES_ADDRESS: usize = 0xFFC00000;
 
 /// Enables paging
 ///
@@ -237,7 +239,7 @@ impl PageDirectory {
 	///  - [PageDirectory::setup_directory_backdoor] must have been called
 	///  - The `index`-th [PagePointer] in [PageDirectory] must be allocated and marked as present
 	const unsafe fn get_page_table(&mut self, index: usize) -> &'static mut PageTable {
-		let table_address = 0xffc00000 + (index * 4096);
+		let table_address = PAGE_TABLES_ADDRESS + (index * 4096);
 		unsafe { &mut *(table_address as *mut PageTable) }
 	}
 }

@@ -1,11 +1,31 @@
 use spin::Mutex;
 
-pub static GLOBAL_ALLOCATOR: Mutex<FrameAllocator> =
+pub static PHYSICAL_ALLOCATOR: Mutex<FrameAllocator> =
 	Mutex::new(FrameAllocator::new_with_every_frame_reserved());
 
 pub(crate) const FRAME_SIZE: usize = 4096;
 pub(crate) const TOTAL_FRAMES: usize = 1_048_576; // 4GB / 4096
 const BITMAP_LENGTH: usize = TOTAL_FRAMES / 32; // 32,768 u32 blocks
+
+/// Allocates a physical page frame of 4096 bytes
+///
+/// Returns None if there is no free memory available
+///
+/// Note: this helper locks the [PHYSICAL_ALLOCATOR], so it should not be used
+/// after manually locking the allocator
+pub fn kmalloc() -> Option<u32> {
+	PHYSICAL_ALLOCATOR.lock().allocate_physical_frame()
+}
+
+/// Deallocates a physical page frame
+///
+/// `physical_address` should be the first address of a physical page frame
+///
+/// Note: this helper locks the [PHYSICAL_ALLOCATOR], so it should not be used
+/// after manually locking the allocator
+pub fn kfree(physical_address: u32) {
+	PHYSICAL_ALLOCATOR.lock().deallocate_physical_frame(physical_address);
+}
 
 pub struct FrameAllocator {
 	/// 0 = free, 1 = used.

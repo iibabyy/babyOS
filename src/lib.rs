@@ -7,6 +7,7 @@
 #![allow(clippy::tabs_in_doc_comments)]
 #![allow(dead_code)]
 
+mod allocator;
 mod gdt;
 mod idt;
 mod keyboard;
@@ -20,31 +21,24 @@ mod vga;
 use core::arch::asm;
 use core::panic::PanicInfo;
 
-pub use self::gdt::dump::dump_kernel_stack;
-use self::idt::interrupts::{
+use crate::allocator::init_virtual_allocator;
+use crate::idt::interrupts::{
 	disable_hardware_interrupts,
 	enable_hardware_interrupts,
 };
-pub use self::paging::malloc::{
-	kfree,
-	kmalloc,
-	vmalloc,
-	vmalloc_size,
-	vfree,
-};
-pub use self::paging::{
+use crate::paging::page_directory::enable_paging;
+use crate::paging::{
 	GRUB_MULTIBOOT_MAGIC,
 	MultibootInfo,
 	init_physical_memory,
 	init_virtual_memory,
 };
-pub use self::shell::shell_loop;
-pub use self::vga::{
-	_print,
-	Color,
-	GLOBAL_VGA_SCREEN,
-};
-use crate::paging::page_directory::enable_paging;
+
+pub use crate::shell::shell_loop;
+pub use crate::gdt::dump::dump_kernel_stack;
+pub use crate::vga::_print;
+
+pub extern crate alloc;
 
 // TODO: add options to asm!() calls (for better compiler optimizations)
 
@@ -72,6 +66,8 @@ pub fn init(magic_number: u32, multiboot_info_ptr: u32) {
 	unsafe {
 		enable_paging(directory_phys_addr);
 	}
+
+	init_virtual_allocator();
 }
 
 /// Prints the panic info and enters an infinite loop
