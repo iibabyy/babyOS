@@ -34,9 +34,10 @@ impl LinkedListAllocator {
 
 		// store `node` at address `addr`
 		let node_addr = vaddr as *mut ListNode;
-		unsafe { core::ptr::write(node_addr, node) };
+		let adjusted_addr = align_up(node_addr as usize, align_of::<ListNode>()) as *mut ListNode;
+		unsafe { core::ptr::write(adjusted_addr, node) };
 
-		self.head = Some(node_addr)
+		self.head = Some(adjusted_addr)
 	}
 
 	pub fn take_free_region(&mut self, layout: core::alloc::Layout) -> Option<*mut u8> {
@@ -56,7 +57,7 @@ impl LinkedListAllocator {
 				if current.size == 0 {
 					self.remove_current_node(current, prev_option);
 				}
-				return Some(addr)
+				return Some(addr);
 			}
 
 			prev_option = Some(current_ptr);
@@ -99,38 +100,38 @@ impl ListNode {
 	}
 
 	fn split(&mut self, layout: Layout) -> Option<*mut u8> {
-		let min_size = layout.size().min(size_of::<ListNode>());
+		let size = layout.size().max(size_of::<ListNode>());
 
 		let alloc_end = self.end_vaddr();
-		let alloc_start = align_down(alloc_end - min_size, layout.align());
+		let alloc_start = align_down(alloc_end - size, layout.align());
 
 		if alloc_start < self.start_vaddr() {
-			return None
+			return None;
 		}
 
 		let split_node_size = alloc_start - self.start_vaddr();
 
-		if split_node_size < core::mem::size_of::<ListNode>() {
+		if split_node_size < size_of::<ListNode>() {
 			// TODO: return the whole block
-			return None
+			return None;
 		}
 
 		self.size = split_node_size;
 
-		return Some(alloc_start as *mut u8)
+		return Some(alloc_start as *mut u8);
 	}
 }
 
 /// Align `addr` downwards to `align`
-/// 
+///
 /// `align` must be a power of 2
 pub const fn align_down(addr: usize, align: usize) -> usize {
-    addr & !(align - 1)
+	addr & !(align - 1)
 }
 
 /// Align `addr` upwards to `align`
-/// 
+///
 /// `align` must be a power of 2
 pub const fn align_up(addr: usize, align: usize) -> usize {
-    align_down(addr + align - 1, align)
+	align_down(addr + align - 1, align)
 }
