@@ -31,3 +31,4 @@ deps/
 /.vscode
 /.zed
 /.gdb_history
+/.harper-dictionary.txt
