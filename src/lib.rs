@@ -22,6 +22,7 @@ use core::arch::asm;
 use core::panic::PanicInfo;
 
 use crate::allocator::init_virtual_allocator;
+pub use crate::gdt::dump::dump_kernel_stack;
 use crate::idt::interrupts::{
 	disable_hardware_interrupts,
 	enable_hardware_interrupts,
@@ -33,9 +34,7 @@ use crate::paging::{
 	init_physical_memory,
 	init_virtual_memory,
 };
-
 pub use crate::shell::shell_loop;
-pub use crate::gdt::dump::dump_kernel_stack;
 pub use crate::vga::_print;
 
 pub extern crate alloc;
